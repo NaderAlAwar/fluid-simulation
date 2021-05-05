@@ -526,23 +526,86 @@ void Fluid::SetEmptySurfaceFull() {
 // ==============================================================
 
 glm::vec3 Fluid::getInterpolatedVelocity(const glm::vec3 &pos) const {
-
-
-  // *********************************************************************  
-  // ASSIGNMENT:
-  //
-  // Here is the naive velocity interpolation.
-  // (use a simple average of the face velocity throughout the cell)
-  // Do it right, as described in the papers.
-  //
   int i = int(floor(pos.x/dx)); if (i < 0) i = 0; if (i >= nx) i = nx-1;
   int j = int(floor(pos.y/dy)); if (j < 0) j = 0; if (j >= ny) j = ny-1;
   int k = int(floor(pos.z/dz)); if (k < 0) k = 0; if (k >= nz) k = nz-1;
   
-  return glm::vec3(get_u_avg(i,j,k),get_v_avg(i,j,k),get_w_avg(i,j,k));
-  //
-  // *********************************************************************  
+  double cx = i * dx + (dx / 2);
+  double cy = j * dy + (dy / 2);
+  double cz = k * dz + (dz / 2);
 
+  double w = 0;
+  for (int di = -1; di <= 1; di++) {
+    for (int dj = -1; dj <= 1; dj++) {
+      double fx = cx + (di * dx);
+      double fy = cy + (dj * dy);
 
+      double width = dx - abs(pos.x - fx);
+      double height = dy - abs(pos.y - fy);
+
+      if (width < 0 || height < 0)
+        continue;
+
+      double volume1 = width * height * (pos.z - (cz - (dz / 2)));
+      double volume2 = width * height * (dz - pos.z + (cz - (dz / 2)));
+
+      Cell *cell1 = getCell(i + di, j + dj, k - 1);
+      Cell *cell2 = getCell(i + di, j + dj, k);
+
+      w += cell1->get_w_plus() * volume1;
+      w += cell2->get_w_plus() * volume2;
+    }
+  }
+
+  double u = 0;
+  for (int dj = -1; dj <= 1; dj++) {
+    for (int dk = -1; dk <= 1; dk++) {
+      double fy = cy + (dj * dy);
+      double fz = cz + (dk * dz);
+
+      double width = dy - abs(pos.y - fy);
+      double height = dz - abs(pos.z - fz);
+
+      if (width < 0 || height < 0)
+        continue;
+
+      double volume1 = width * height * (pos.x - (cx - (dx / 2)));
+      double volume2 = width * height * (dx - pos.x + (cx - (dx / 2)));
+
+      Cell *cell1 = getCell(i - 1, j + dj, k + dk);
+      Cell *cell2 = getCell(i, j + dj, k + dk);
+
+      u += cell1->get_u_plus() * volume1;
+      u += cell2->get_u_plus() * volume2;
+    }
+  }
+
+  double v = 0;
+  for (int di = -1; di <= 1; di++) {
+    for (int dk = -1; dk <= 1; dk++) {
+      double fx = cx + (di * dx);
+      double fz = cz + (dk * dz);
+
+      double width = dx - abs(pos.x - fx);
+      double height = dz - abs(pos.z - fz);
+
+      if (width < 0 || height < 0)
+        continue;
+
+      double volume1 = width * height * (pos.y - (cy - (dy / 2)));
+      double volume2 = width * height * (dy - pos.y + (cy - (dy / 2)));
+
+      Cell *cell1 = getCell(i + di, j - 1, k + dk);
+      Cell *cell2 = getCell(i + di, j, k + dk);
+
+      v += cell1->get_v_plus() * volume1;
+      v += cell2->get_v_plus() * volume2;
+    }
+  }
+
+  glm::vec3 interpolated(u, v, w);
+  interpolated /= (dx * dy * dz);
+
+  return interpolated;
 }
 
