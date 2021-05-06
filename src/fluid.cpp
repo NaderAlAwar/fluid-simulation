@@ -395,9 +395,8 @@ double Fluid::AdjustForIncompressibility() {
     for (int j = -1; j <= ny; j++) {
       for (int k = -1; k <= nz; k++) {
         Cell *c = getCell(i,j,k);
-        if (i >= 0 && i < nx && j >= 0 && j < ny && k >= 0 && k < nz) {
+        if (i >= 0 && i < nx && j >= 0 && j < ny && k >= 0 && k < nz && c->getStatus() == CELL_FULL) {
           // compute divergence and increment/decrement pressure
-          double pressure = c->getPressure();
           double divergence = 
             - ( (1/dx) * (get_new_u_plus(i,j,k) - get_new_u_plus(i-1,j,k)) +
               (1/dy) * (get_new_v_plus(i,j,k) - get_new_v_plus(i,j-1,k)) +
@@ -416,8 +415,6 @@ double Fluid::AdjustForIncompressibility() {
           adjust_new_u_plus(i - 1, j, k, - dt * dp / dx);
           adjust_new_v_plus(i, j - 1, k, - dt * dp / dy);
           adjust_new_w_plus(i, j, k - 1, - dt * dp / dz);
-
-      	  c->setPressure(pressure + dp);
         }
       }
     }
@@ -558,16 +555,23 @@ void Fluid::SetEmptySurfaceFull() {
 // ==============================================================
 
 glm::vec3 Fluid::getInterpolatedVelocity(const glm::vec3 &pos) const {
+  // std::cout << "getting velocity\n";
+
   int i = int(floor(pos.x/dx)); if (i < 0) i = 0; if (i >= nx) i = nx-1;
   int j = int(floor(pos.y/dy)); if (j < 0) j = 0; if (j >= ny) j = ny-1;
   int k = int(floor(pos.z/dz)); if (k < 0) k = 0; if (k >= nz) k = nz-1;
   
+  if (i == 0 || i == nx - 1 || j == 0 || j == nx - 1)
+    return glm::vec3(get_u_avg(i,j,k),get_v_avg(i,j,k),get_w_avg(i,j,k));
+
   double cx = i * dx + (dx / 2);
   double cy = j * dy + (dy / 2);
   double cz = k * dz + (dz / 2);
 
+
   double w = 0;
   int count_1 = 0;
+  double volume_1_total = 0;
   for (int di = -1; di <= 1; di++) {
     for (int dj = -1; dj <= 1; dj++) {
       double fx = cx + (di * dx) + (dx / 2);
@@ -584,6 +588,8 @@ glm::vec3 Fluid::getInterpolatedVelocity(const glm::vec3 &pos) const {
       double volume1 = width * height * (pos.z - (cz - (dz / 2)));
       double volume2 = width * height * (dz - pos.z + (cz - (dz / 2)));
 
+      volume_1_total += volume1 + volume2;
+
       Cell *cell1 = getCell(i + di, j + dj, k - 1);
       Cell *cell2 = getCell(i + di, j + dj, k);
 
@@ -594,6 +600,7 @@ glm::vec3 Fluid::getInterpolatedVelocity(const glm::vec3 &pos) const {
 
   double u = 0;
   int count_2 = 0;
+  double volume_2_total = 0;
   for (int dj = -1; dj <= 1; dj++) {
     for (int dk = -1; dk <= 1; dk++) {
       double fy = cy + (dj * dy) + (dy / 2);
@@ -610,6 +617,8 @@ glm::vec3 Fluid::getInterpolatedVelocity(const glm::vec3 &pos) const {
       double volume1 = width * height * (pos.x - (cx - (dx / 2)));
       double volume2 = width * height * (dx - pos.x + (cx - (dx / 2)));
 
+      volume_2_total += volume1 + volume2;
+
       Cell *cell1 = getCell(i - 1, j + dj, k + dk);
       Cell *cell2 = getCell(i, j + dj, k + dk);
 
@@ -620,6 +629,7 @@ glm::vec3 Fluid::getInterpolatedVelocity(const glm::vec3 &pos) const {
 
   double v = 0;
   int count_3 = 0;
+  double volume_3_total = 0;
   for (int di = -1; di <= 1; di++) {
     for (int dk = -1; dk <= 1; dk++) {
       double fx = cx + (di * dx) + (dx / 2);
@@ -636,6 +646,8 @@ glm::vec3 Fluid::getInterpolatedVelocity(const glm::vec3 &pos) const {
       double volume1 = width * height * (pos.y - (cy - (dy / 2)));
       double volume2 = width * height * (dy - pos.y + (cy - (dy / 2)));
 
+      volume_3_total += volume1 + volume2;
+
       Cell *cell1 = getCell(i + di, j - 1, k + dk);
       Cell *cell2 = getCell(i + di, j, k + dk);
 
@@ -644,9 +656,17 @@ glm::vec3 Fluid::getInterpolatedVelocity(const glm::vec3 &pos) const {
     }
   }
 
-  assert(count_1 == 4);
-  assert(count_2 == 4);
-  assert(count_3 == 4);
+  if (count_1 != 4) {
+    std::cout << "x " << pos.x << " y " << pos.y << " z " << pos.z << '\n';
+    std::cout << "count 1 " << count_1 << '\n';
+  }
+  // assert(count_1 == 4);
+  // assert(count_2 == 4);
+  // assert(count_3 == 4);
+
+  assert(abs(volume_1_total - (dx * dy * dz)) < EPSILON);
+  assert(abs(volume_2_total - (dx * dy * dz)) < EPSILON);
+  assert(abs(volume_3_total - (dx * dy * dz)) < EPSILON);
 
   glm::vec3 interpolated(u, v, w);
   interpolated /= (dx * dy * dz);
