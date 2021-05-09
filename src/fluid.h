@@ -64,6 +64,8 @@ private:
   // NAVIER-STOKES HELPERS
   glm::vec3 getInterpolatedVelocity(const glm::vec3 &pos) const;
   double getPressure(int i, int j, int k) const { return getCell(i,j,k)->getPressure(); }
+  double ComputeDivergence(int i, int j, int k) const;
+  double ComputeDP(double divergence) const;
   // velocity accessors
   double get_u_plus(int i, int j, int k) const { return getCell(i,j,k)->get_u_plus(); }
   double get_v_plus(int i, int j, int k) const { return getCell(i,j,k)->get_v_plus(); }  

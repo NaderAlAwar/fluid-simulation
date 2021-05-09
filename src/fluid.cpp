@@ -375,42 +375,45 @@ void Fluid::CopyVelocities() {
 
 // ==============================================================
 
+double Fluid::ComputeDivergence(int i, int j, int k) const {
+  double divergence = 
+    - ( (1/dx) * (get_new_u_plus(i,j,k) - get_new_u_plus(i-1,j,k)) +
+      (1/dy) * (get_new_v_plus(i,j,k) - get_new_v_plus(i,j-1,k)) +
+      (1/dz) * (get_new_w_plus(i,j,k) - get_new_w_plus(i,j,k-1)) );
+
+  return divergence;
+}
+
+// ==============================================================
+
+double Fluid::ComputeDP(double divergence) const {
+  double dt = args->timestep;
+  double beta = BETA_0/((2*dt) * (1/square(dx) + 1/square(dy) + 1/square(dz)));
+  double dp = beta*divergence;
+
+  return dp;
+}
+
+// ==============================================================
+
 double Fluid::AdjustForIncompressibility() {
-
-
-  // *********************************************************************  
-  // ASSIGNMENT:
-  //
-  // This is not a complete implementation of the Marker and Cell (MAC) method.
-  // Additional boundary velocities should be equalized as described in the references
-  // depending on whether the boundaries are free-slip or no-slip.
-  //
-  // Also play around with compressible flow!
-  //
-  // ********************************************************************* 
-
   double max_divergence = 0;
 
-  for (int i = -1; i <= nx; i++) {
-    for (int j = -1; j <= ny; j++) {
-      for (int k = -1; k <= nz; k++) {
+  for (int i = 0; i < nx; i++) {
+    for (int j = 0; j < ny; j++) {
+      for (int k = 0; k < nz; k++) {
         Cell *c = getCell(i,j,k);
-        if (i >= 0 && i < nx && j >= 0 && j < ny && k >= 0 && k < nz && c->getStatus() != CELL_EMPTY) {
+        if (c->getStatus() != CELL_EMPTY) {
           // compute divergence and increment/decrement pressure
-          double divergence = 
-            - ( (1/dx) * (get_new_u_plus(i,j,k) - get_new_u_plus(i-1,j,k)) +
-              (1/dy) * (get_new_v_plus(i,j,k) - get_new_v_plus(i,j-1,k)) +
-              (1/dz) * (get_new_w_plus(i,j,k) - get_new_w_plus(i,j,k-1)) );
-
+          double divergence = ComputeDivergence(i, j, k);
           max_divergence = std::max(divergence, max_divergence);
 
           double dt = args->timestep;
-          double beta = BETA_0/((2*dt) * (1/square(dx) + 1/square(dy) + 1/square(dz)));
-          double dp = beta*divergence;
+          double dp = ComputeDP(divergence);
 
-          adjust_new_u_plus(i, j, k, dt * dp / dx);
-          adjust_new_v_plus(i, j, k, dt * dp / dy);
-          adjust_new_w_plus(i, j, k, dt * dp / dz);
+          c->adjust_new_u_plus(dt * dp / dx);
+          c->adjust_new_v_plus(dt * dp / dy);
+          c->adjust_new_w_plus(dt * dp / dz);
 
           adjust_new_u_plus(i - 1, j, k, - dt * dp / dx);
           adjust_new_v_plus(i, j - 1, k, - dt * dp / dy);
@@ -435,13 +438,9 @@ void Fluid::UpdatePressures() {
 	if (i >= 0 && i < nx && j >= 0 && j < ny && k >= 0 && k < nz) {
 	  // compute divergence and increment/decrement pressure
 	  double pressure = c->getPressure();
-	  double divergence = 
-	    - ( (1/dx) * (get_new_u_plus(i,j,k) - get_new_u_plus(i-1,j,k)) +
-		(1/dy) * (get_new_v_plus(i,j,k) - get_new_v_plus(i,j-1,k)) +
-		(1/dz) * (get_new_w_plus(i,j,k) - get_new_w_plus(i,j,k-1)) );
-	  double dt = args->timestep;
-	  double beta = BETA_0/((2*dt) * (1/square(dx) + 1/square(dy) + 1/square(dz)));
-	  double dp = beta*divergence;
+    double divergence = ComputeDivergence(i, j, k);
+
+    double dp = ComputeDP(divergence);
 	  c->setPressure(pressure + dp);
 	} else {
 	  // zero out boundary cells (just in case)
