@@ -1,0 +1,6 @@
+1) Clean up code: remove cloth code + modern c++?
+2) Simulate ice melting
+3) Simulate smoke
+4) Obstacles
+5) Add better scenes: waterfall, etc.
+6) Better rendering + visualization
