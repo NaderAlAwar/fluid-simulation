@@ -587,8 +587,8 @@ glm::vec3 Fluid::getInterpolatedVelocity(const glm::vec3 &pos) const {
 
       count_1++;
 
-      double volume1 = width * height * (pos.z - (cz - (dz / 2)));
-      double volume2 = width * height * (dz - pos.z + (cz - (dz / 2)));
+      double volume1 = width * height * (dz - pos.z + (cz - (dz / 2)));
+      double volume2 = width * height * (pos.z - (cz - (dz / 2)));
 
       volume_1_total += volume1 + volume2;
 
@@ -616,8 +616,8 @@ glm::vec3 Fluid::getInterpolatedVelocity(const glm::vec3 &pos) const {
 
       count_2++;
 
-      double volume1 = width * height * (pos.x - (cx - (dx / 2)));
-      double volume2 = width * height * (dx - pos.x + (cx - (dx / 2)));
+      double volume1 = width * height * (dx - pos.x + (cx - (dx / 2)));
+      double volume2 = width * height * (pos.x - (cx - (dx / 2)));
 
       volume_2_total += volume1 + volume2;
 
@@ -645,8 +645,8 @@ glm::vec3 Fluid::getInterpolatedVelocity(const glm::vec3 &pos) const {
 
       count_3++;
 
-      double volume1 = width * height * (pos.y - (cy - (dy / 2)));
-      double volume2 = width * height * (dy - pos.y + (cy - (dy / 2)));
+      double volume1 = width * height * (dy - pos.y + (cy - (dy / 2)));
+      double volume2 = width * height * (pos.y - (cy - (dy / 2)));
 
       volume_3_total += volume1 + volume2;
 
