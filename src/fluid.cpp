@@ -566,104 +566,46 @@ glm::vec3 Fluid::getInterpolatedVelocity(const glm::vec3 &pos) const {
     return glm::vec3(get_u_avg(i,j,k),get_v_avg(i,j,k),get_w_avg(i,j,k));
   }
 
-  double cx = i * dx + (dx / 2);
-  double cy = j * dy + (dy / 2);
-  double cz = k * dz + (dz / 2);
-
+  double u = 0;
+  double v = 0;
   double w = 0;
-  int count_1 = 0;
-  double volume_1_total = 0;
+
   for (int di = -1; di <= 1; di++) {
     for (int dj = -1; dj <= 1; dj++) {
-      double fx = cx + (di * dx);
-      double fy = cy + (dj * dy);
+      for (int dk = -1; dk <= 1; dk++) {
+        Cell *cell = getCell(i + di, j + dj, k + dk);
+        double cx = dx * (i + di) + (dx / 2);
+        double cy = dy * (j + dj) + (dy / 2);
+        double cz = dz * (k + dk) + (dz / 2);
 
-      double width = dx - abs(pos.x - fx);
-      double height = dy - abs(pos.y - fy);
+        double width, height, depth;
 
-      if (width < 0 || height < 0)
-        continue;
+        // Calculating u
+        width = dx - abs(pos.x - cx - (dx / 2));
+        height = dy - abs(pos.y - cy);
+        depth = dz - abs(pos.z - cz);
 
-      count_1++;
+        if (width >= 0 && height >= 0 && depth >= 0)
+          u += cell->get_u_plus() * width * height * depth;
 
-      double volume1 = width * height * (dz - pos.z + (cz - (dz / 2)));
-      double volume2 = width * height * (pos.z - (cz - (dz / 2)));
+        // Calculating v
+        width = dx - abs(pos.x - cx);
+        height = dy - abs(pos.y - cy - (dy / 2));
+        depth = dz - abs(pos.z - cz);
 
-      volume_1_total += volume1 + volume2;
+        if (width >= 0 && height >= 0 && depth >= 0)
+          v += cell->get_v_plus() * width * height * depth;
 
-      Cell *cell1 = getCell(i + di, j + dj, k - 1);
-      Cell *cell2 = getCell(i + di, j + dj, k);
+        // Calculating w
+        width = dx - abs(pos.x - cx);
+        height = dy - abs(pos.y - cy);
+        depth = dz - abs(pos.z - cz - (dz / 2));
 
-      w += cell1->get_w_plus() * volume1;
-      w += cell2->get_w_plus() * volume2;
+        if (width >= 0 && height >= 0 && depth >= 0)
+          w += cell->get_w_plus() * width * height * depth;
+      }
     }
   }
-
-  double u = 0;
-  int count_2 = 0;
-  double volume_2_total = 0;
-  for (int dj = -1; dj <= 1; dj++) {
-    for (int dk = -1; dk <= 1; dk++) {
-      double fy = cy + (dj * dy);
-      double fz = cz + (dk * dz);
-
-      double width = dy - abs(pos.y - fy);
-      double height = dz - abs(pos.z - fz);
-
-      if (width < 0 || height < 0)
-        continue;
-
-      count_2++;
-
-      double volume1 = width * height * (dx - pos.x + (cx - (dx / 2)));
-      double volume2 = width * height * (pos.x - (cx - (dx / 2)));
-
-      volume_2_total += volume1 + volume2;
-
-      Cell *cell1 = getCell(i - 1, j + dj, k + dk);
-      Cell *cell2 = getCell(i, j + dj, k + dk);
-
-      u += cell1->get_u_plus() * volume1;
-      u += cell2->get_u_plus() * volume2;
-    }
-  }
-
-  double v = 0;
-  int count_3 = 0;
-  double volume_3_total = 0;
-  for (int di = -1; di <= 1; di++) {
-    for (int dk = -1; dk <= 1; dk++) {
-      double fx = cx + (di * dx);
-      double fz = cz + (dk * dz);
-
-      double width = dx - abs(pos.x - fx);
-      double height = dz - abs(pos.z - fz);
-
-      if (width < 0 || height < 0)
-        continue;
-
-      count_3++;
-
-      double volume1 = width * height * (dy - pos.y + (cy - (dy / 2)));
-      double volume2 = width * height * (pos.y - (cy - (dy / 2)));
-
-      volume_3_total += volume1 + volume2;
-
-      Cell *cell1 = getCell(i + di, j - 1, k + dk);
-      Cell *cell2 = getCell(i + di, j, k + dk);
-
-      v += cell1->get_v_plus() * volume1;
-      v += cell2->get_v_plus() * volume2;
-    }
-  }
-
-  assert(count_1 == 4);
-  assert(count_2 == 4);
-  assert(count_3 == 4);
-
-  assert(abs(volume_1_total - (dx * dy * dz)) < EPSILON);
-  assert(abs(volume_2_total - (dx * dy * dz)) < EPSILON);
-  assert(abs(volume_3_total - (dx * dy * dz)) < EPSILON);
 
   glm::vec3 interpolated(u, v, w);
   interpolated /= (dx * dy * dz);
