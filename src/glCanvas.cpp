@@ -1,19 +1,19 @@
-#include <cstdlib>
 #include "glCanvas.h"
-#include "cloth.h"
-#include "fluid.h"
 #include "argparser.h"
 #include "camera.h"
+#include "cloth.h"
+#include "fluid.h"
+#include <cstdlib>
 
 // ========================================================
 // static variables of GLCanvas class
 
-ArgParser* GLCanvas::args = NULL;
-Cloth* GLCanvas::cloth = NULL;
-Fluid* GLCanvas::fluid = NULL;
-Camera* GLCanvas::camera = NULL;
+ArgParser *GLCanvas::args = NULL;
+Cloth *GLCanvas::cloth = NULL;
+Fluid *GLCanvas::fluid = NULL;
+Camera *GLCanvas::camera = NULL;
 BoundingBox GLCanvas::bbox;
-GLFWwindow* GLCanvas::window = NULL;
+GLFWwindow *GLCanvas::window = NULL;
 
 // mouse position
 int GLCanvas::mouseX = 0;
@@ -54,11 +54,11 @@ void GLCanvas::initialize(ArgParser *_args) {
   glfwSetErrorCallback(error_callback);
 
   // Initialize GLFW
-  if( !glfwInit() ) {
+  if (!glfwInit()) {
     std::cerr << "ERROR: Failed to initialize GLFW" << std::endl;
     exit(1);
   }
-  
+
   // We will ask it to specifically open an OpenGL 3.2 context
   glfwWindowHint(GLFW_SAMPLES, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -67,7 +67,8 @@ void GLCanvas::initialize(ArgParser *_args) {
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
   // Create a GLFW window
-  window = glfwCreateWindow(args->width,args->height, "OpenGL viewer", NULL, NULL);
+  window =
+      glfwCreateWindow(args->width, args->height, "OpenGL viewer", NULL, NULL);
   if (!window) {
     std::cerr << "ERROR: Failed to open GLFW window" << std::endl;
     glfwTerminate();
@@ -86,19 +87,21 @@ void GLCanvas::initialize(ArgParser *_args) {
 
   // there seems to be a "GL_INVALID_ENUM" error in glewInit that is a
   // know issue, but can safely be ignored
-  HandleGLError("after glewInit()",true);
+  HandleGLError("after glewInit()", true);
 
-  std::cout << "-------------------------------------------------------" << std::endl;
-  std::cout << "OpenGL Version: " << (char*)glGetString(GL_VERSION) << '\n';
-  std::cout << "-------------------------------------------------------" << std::endl;
+  std::cout << "-------------------------------------------------------"
+            << std::endl;
+  std::cout << "OpenGL Version: " << (char *)glGetString(GL_VERSION) << '\n';
+  std::cout << "-------------------------------------------------------"
+            << std::endl;
 
   // Initialize callback functions
-  glfwSetCursorPosCallback(GLCanvas::window,GLCanvas::mousemotionCB);
-  glfwSetMouseButtonCallback(GLCanvas::window,GLCanvas::mousebuttonCB);
-  glfwSetKeyCallback(GLCanvas::window,GLCanvas::keyboardCB);
+  glfwSetCursorPosCallback(GLCanvas::window, GLCanvas::mousemotionCB);
+  glfwSetMouseButtonCallback(GLCanvas::window, GLCanvas::mousebuttonCB);
+  glfwSetKeyCallback(GLCanvas::window, GLCanvas::keyboardCB);
 
-  programID = LoadShaders( args->path+"/simulation.vertexshader",
-                           args->path+"/simulation.fragmentshader" );
+  programID = LoadShaders(args->path + "/simulation.vertexshader",
+                          args->path + "/simulation.fragmentshader");
 
   // Load cloth &/or fluid models
   Load();
@@ -108,95 +111,105 @@ void GLCanvas::initialize(ArgParser *_args) {
   GLCanvas::setupVBOs();
 
   // ===========================
-  // initial placement of camera 
-  // look at an object scaled & positioned to just fit in the box (-1,-1,-1)->(1,1,1)
-  glm::vec3 camera_position = glm::vec3(1,3,8);
-  glm::vec3 point_of_interest = glm::vec3(0,0,0);
-  glm::vec3 up = glm::vec3(0,1,0);
+  // initial placement of camera
+  // look at an object scaled & positioned to just fit in the box
+  // (-1,-1,-1)->(1,1,1)
+  glm::vec3 camera_position = glm::vec3(1, 3, 8);
+  glm::vec3 point_of_interest = glm::vec3(0, 0, 0);
+  glm::vec3 up = glm::vec3(0, 1, 0);
 
   if (args->perspective) {
     float angle = 20.0;
-    camera = new PerspectiveCamera(camera_position, point_of_interest, up, angle);
+    camera =
+        new PerspectiveCamera(camera_position, point_of_interest, up, angle);
   } else {
     float size = 2.5;
-    camera = new OrthographicCamera(camera_position, point_of_interest, up, size);
+    camera =
+        new OrthographicCamera(camera_position, point_of_interest, up, size);
   }
-  camera->glPlaceCamera(); 
+  camera->glPlaceCamera();
 
   HandleGLError("finished glcanvas initialize");
 }
 
-
-void GLCanvas::Load(){
-  delete cloth; 
+void GLCanvas::Load() {
+  delete cloth;
   cloth = NULL;
-  delete fluid; 
+  delete fluid;
   fluid = NULL;
   if (args->cloth_file != "")
     cloth = new Cloth(args);
   if (args->fluid_file != "")
     fluid = new Fluid(args);
-  assert (cloth || fluid);
+  assert(cloth || fluid);
 }
 
-void GLCanvas::animate(){
+void GLCanvas::animate() {
   if (args->animate) {
     // do 10 steps of animation before rendering
     for (int i = 0; i < 10; i++) {
-      if (cloth) cloth->Animate();
-      if (fluid) fluid->Animate();
+      if (cloth)
+        cloth->Animate();
+      if (fluid)
+        fluid->Animate();
     }
   }
   setupVBOs();
 }
 
-void GLCanvas::initializeVBOs(){
+void GLCanvas::initializeVBOs() {
   HandleGLError("enter initilizeVBOs()");
   glGenVertexArrays(1, &simulation_VAO);
   glBindVertexArray(simulation_VAO);
 
-
   GLCanvas::MatrixID = glGetUniformLocation(GLCanvas::programID, "MVP");
-  GLCanvas::LightID = glGetUniformLocation(GLCanvas::programID, "LightPosition_worldspace");
+  GLCanvas::LightID =
+      glGetUniformLocation(GLCanvas::programID, "LightPosition_worldspace");
   GLCanvas::ViewMatrixID = glGetUniformLocation(GLCanvas::programID, "V");
   GLCanvas::ModelMatrixID = glGetUniformLocation(GLCanvas::programID, "M");
-  GLCanvas::wireframeID = glGetUniformLocation(GLCanvas::programID, "wireframe");
-  GLCanvas::colormodeID = glGetUniformLocation(GLCanvas::programID, "colormode");
+  GLCanvas::wireframeID =
+      glGetUniformLocation(GLCanvas::programID, "wireframe");
+  GLCanvas::colormodeID =
+      glGetUniformLocation(GLCanvas::programID, "colormode");
 
-
-  if (cloth) cloth->initializeVBOs();
-  if (fluid) fluid->initializeVBOs();
+  if (cloth)
+    cloth->initializeVBOs();
+  if (fluid)
+    fluid->initializeVBOs();
   HandleGLError("leaving initilizeVBOs()");
 }
 
-void GLCanvas::setupVBOs(){
+void GLCanvas::setupVBOs() {
   if (cloth != NULL) {
     bbox.Set(cloth->getBoundingBox());
     if (fluid != NULL) {
       bbox.Extend(fluid->getBoundingBox());
     }
   } else {
-    assert (fluid != NULL);
-    bbox.Set(fluid->getBoundingBox()); 
+    assert(fluid != NULL);
+    bbox.Set(fluid->getBoundingBox());
   }
 
   bbox.setupVBOs();
-  if (cloth) cloth->setupVBOs();
-  if (fluid) fluid->setupVBOs();
+  if (cloth)
+    cloth->setupVBOs();
+  if (fluid)
+    fluid->setupVBOs();
   HandleGLError("leaving setupVBOs()");
 }
 
-void GLCanvas::drawVBOs(const glm::mat4 &ProjectionMatrix,const glm::mat4 &ViewMatrix,const glm::mat4 &ModelMatrix){
+void GLCanvas::drawVBOs(const glm::mat4 &ProjectionMatrix,
+                        const glm::mat4 &ViewMatrix,
+                        const glm::mat4 &ModelMatrix) {
 
   HandleGLError("enter GlCanvas::drawVBOs()");
-
 
   // prepare data to send to the shaders
   glm::mat4 MVP = ProjectionMatrix * ViewMatrix * ModelMatrix;
 
   HandleGLError("mid1 GlCanvas::drawVBOs()");
 
-  glm::vec3 lightPos = glm::vec3(4,4,4);
+  glm::vec3 lightPos = glm::vec3(4, 4, 4);
   glUniform3f(GLCanvas::LightID, lightPos.x, lightPos.y, lightPos.z);
   HandleGLError("mid1 GlCanvas::drawVBOs()");
   glUniformMatrix4fv(GLCanvas::MatrixID, 1, GL_FALSE, &MVP[0][0]);
@@ -216,50 +229,53 @@ void GLCanvas::drawVBOs(const glm::mat4 &ProjectionMatrix,const glm::mat4 &ViewM
   }
   HandleGLError("mid7 GlCanvas::drawVBOs()");
 
-
   glUniform1i(GLCanvas::colormodeID, 0);
   HandleGLError("mid8 GlCanvas::drawVBOs()");
 
-  if (cloth) cloth->drawVBOs();
-  if (fluid) fluid->drawVBOs();
+  if (cloth)
+    cloth->drawVBOs();
+  if (fluid)
+    fluid->drawVBOs();
   HandleGLError("leaving GlCanvas::drawVBOs()");
 }
 
-void GLCanvas::cleanupVBOs(){
-  if (cloth) cloth->cleanupVBOs();
-  if (fluid) fluid->cleanupVBOs();
+void GLCanvas::cleanupVBOs() {
+  if (cloth)
+    cloth->cleanupVBOs();
+  if (fluid)
+    fluid->cleanupVBOs();
 }
-
 
 // ========================================================
 // Callback function for mouse click or release
 // ========================================================
 
-void GLCanvas::mousebuttonCB(GLFWwindow *window, int which_button, int action, int mods) {
+void GLCanvas::mousebuttonCB(GLFWwindow *window, int which_button, int action,
+                             int mods) {
   // store the current state of the mouse buttons
   if (which_button == GLFW_MOUSE_BUTTON_1) {
     if (action == GLFW_PRESS) {
       leftMousePressed = true;
     } else {
-      assert (action == GLFW_RELEASE);
+      assert(action == GLFW_RELEASE);
       leftMousePressed = false;
     }
   } else if (which_button == GLFW_MOUSE_BUTTON_2) {
     if (action == GLFW_PRESS) {
       rightMousePressed = true;
     } else {
-      assert (action == GLFW_RELEASE);
+      assert(action == GLFW_RELEASE);
       rightMousePressed = false;
     }
   } else if (which_button == GLFW_MOUSE_BUTTON_3) {
     if (action == GLFW_PRESS) {
       middleMousePressed = true;
     } else {
-      assert (action == GLFW_RELEASE);
+      assert(action == GLFW_RELEASE);
       middleMousePressed = false;
     }
   }
-}	
+}
 
 // ========================================================
 // Callback function for mouse drag
@@ -269,24 +285,24 @@ void GLCanvas::mousemotionCB(GLFWwindow *window, double x, double y) {
   // camera controls that work well for a 3 button mouse
   if (!shiftKeyPressed && !controlKeyPressed && !altKeyPressed) {
     if (leftMousePressed) {
-      camera->rotateCamera(mouseX-x,mouseY-y);
-    } else if (middleMousePressed)  {
-      camera->truckCamera(mouseX-x, y-mouseY);
+      camera->rotateCamera(mouseX - x, mouseY - y);
+    } else if (middleMousePressed) {
+      camera->truckCamera(mouseX - x, y - mouseY);
     } else if (rightMousePressed) {
-      camera->dollyCamera(mouseY-y);
+      camera->dollyCamera(mouseY - y);
     }
   }
 
   if (leftMousePressed || middleMousePressed || rightMousePressed) {
     if (shiftKeyPressed) {
-      camera->zoomCamera(mouseY-y);
+      camera->zoomCamera(mouseY - y);
     }
     // allow reasonable control for a non-3 button mouse
     if (controlKeyPressed) {
-      camera->truckCamera(mouseX-x, y-mouseY);    
+      camera->truckCamera(mouseX - x, y - mouseY);
     }
     if (altKeyPressed) {
-      camera->dollyCamera(y-mouseY);    
+      camera->dollyCamera(y - mouseY);
     }
   }
   mouseX = x;
@@ -297,12 +313,13 @@ void GLCanvas::mousemotionCB(GLFWwindow *window, double x, double y) {
 // Callback function for keyboard events
 // ========================================================
 
-void GLCanvas::keyboardCB(GLFWwindow* window, int key, int scancode, int action, int mods) {
+void GLCanvas::keyboardCB(GLFWwindow *window, int key, int scancode, int action,
+                          int mods) {
   // store the modifier keys
-  //shiftKeyPressed = (GLFW_MOD_SHIFT & mods);
-  //controlKeyPressed = (GLFW_MOD_CONTROL & mods);
-  //altKeyPressed = (GLFW_MOD_ALT & mods);
-  //superKeyPressed = (GLFW_MOD_SUPER & mods);
+  // shiftKeyPressed = (GLFW_MOD_SHIFT & mods);
+  // controlKeyPressed = (GLFW_MOD_CONTROL & mods);
+  // altKeyPressed = (GLFW_MOD_ALT & mods);
+  // superKeyPressed = (GLFW_MOD_SUPER & mods);
   if (key == GLFW_KEY_LEFT_SHIFT || key == GLFW_KEY_RIGHT_SHIFT)
     shiftKeyPressed = (action == GLFW_PRESS || action == GLFW_REPEAT);
   if (key == GLFW_KEY_LEFT_CONTROL || key == GLFW_KEY_RIGHT_CONTROL)
@@ -318,69 +335,86 @@ void GLCanvas::keyboardCB(GLFWwindow* window, int key, int scancode, int action,
   }
 
   // other normal ascii keys...
-  if ( (action == GLFW_PRESS || action == GLFW_REPEAT) && key < 256) {
+  if ((action == GLFW_PRESS || action == GLFW_REPEAT) && key < 256) {
     switch (key) {
-    case 'a': case 'A':
+    case 'a':
+    case 'A':
       // toggle continuous animation
       args->animate = !args->animate;
-      if (args->animate) 
-        printf ("animation started, press 'A' to stop\n");
+      if (args->animate)
+        printf("animation started, press 'A' to stop\n");
       else
-        printf ("animation stopped, press 'A' to start\n");
+        printf("animation stopped, press 'A' to start\n");
       break;
     case ' ':
       // a single step of animation
-      if (cloth) cloth->Animate();
-      if (fluid) fluid->Animate();
-      break; 
-    case 'm':  case 'M': 
+      if (cloth)
+        cloth->Animate();
+      if (fluid)
+        fluid->Animate();
+      break;
+    case 'm':
+    case 'M':
       args->particles = !args->particles;
-      break; 
-    case 'v':  case 'V': 
+      break;
+    case 'v':
+    case 'V':
       args->velocity = !args->velocity;
-      break; 
-    case 'f':  case 'F': 
+      break;
+    case 'f':
+    case 'F':
       args->force = !args->force;
-      break; 
-    case 'e':  case 'E':   // "faces"/"edges"
+      break;
+    case 'e':
+    case 'E': // "faces"/"edges"
       args->face_velocity = !args->face_velocity;
-      break; 
-    case 'd':  case 'D': 
-      args->dense_velocity = (args->dense_velocity+1)%4;
-      break; 
-    case 's':  case 'S': 
+      break;
+    case 'd':
+    case 'D':
+      args->dense_velocity = (args->dense_velocity + 1) % 4;
+      break;
+    case 's':
+    case 'S':
       args->surface = !args->surface;
-      break; 
-    case 'w':  case 'W':
+      break;
+    case 'w':
+    case 'W':
       args->wireframe = !args->wireframe;
       break;
-    case 'b':  case 'B':
+    case 'b':
+    case 'B':
       args->bounding_box = !args->bounding_box;
       break;
-    case 'c':  case 'C': 
+    case 'c':
+    case 'C':
       args->cubes = !args->cubes;
-      break; 
-    case 'p':  case 'P': 
+      break;
+    case 'p':
+    case 'P':
       args->pressure = !args->pressure;
-      break; 
-    case 'r':  case 'R': 
+      break;
+    case 'r':
+    case 'R':
       // reset system
       cleanupVBOs();
       Load();
       initializeVBOs();
       setupVBOs();
-      break; 
-    case '+': case '=':
+      break;
+    case '+':
+    case '=':
       std::cout << "timestep doubled:  " << args->timestep << " -> ";
-      args->timestep *= 2.0; 
+      args->timestep *= 2.0;
       std::cout << args->timestep << std::endl;
       break;
-    case '-': case '_':
+    case '-':
+    case '_':
       std::cout << "timestep halved:  " << args->timestep << " -> ";
-      args->timestep /= 2.0; 
+      args->timestep /= 2.0;
       std::cout << args->timestep << std::endl;
       break;
-    case 'q':  case 'Q':
+    case 'q':
+    case 'Q':
       exit(0);
       break;
     default:
@@ -390,25 +424,25 @@ void GLCanvas::keyboardCB(GLFWwindow* window, int key, int scancode, int action,
   }
 }
 
-
 // ========================================================
 // Load the vertex & fragment shaders
 // ========================================================
 
-GLuint LoadShaders(const std::string &vertex_file_path,const std::string &fragment_file_path){
+GLuint LoadShaders(const std::string &vertex_file_path,
+                   const std::string &fragment_file_path) {
 
   std::cout << "load shaders" << std::endl;
 
   // Create the shaders
   GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
   GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
-  
+
   // Read the Vertex Shader code from the file
   std::string VertexShaderCode;
   std::ifstream VertexShaderStream(vertex_file_path.c_str(), std::ios::in);
-  if (VertexShaderStream.is_open()){
+  if (VertexShaderStream.is_open()) {
     std::string Line = "";
-    while(getline(VertexShaderStream, Line))
+    while (getline(VertexShaderStream, Line))
       VertexShaderCode += "\n" + Line;
     VertexShaderStream.close();
   } else {
@@ -418,27 +452,27 @@ GLuint LoadShaders(const std::string &vertex_file_path,const std::string &fragme
   // Read the Fragment Shader code from the file
   std::string FragmentShaderCode;
   std::ifstream FragmentShaderStream(fragment_file_path.c_str(), std::ios::in);
-  if(FragmentShaderStream.is_open()){
+  if (FragmentShaderStream.is_open()) {
     std::string Line = "";
-    while(getline(FragmentShaderStream, Line))
+    while (getline(FragmentShaderStream, Line))
       FragmentShaderCode += "\n" + Line;
     FragmentShaderStream.close();
   } else {
     std::cerr << "ERROR: cannot open " << vertex_file_path << std::endl;
     exit(0);
   }
-  
+
   GLint Result = GL_FALSE;
- 
+
   // Compile Vertex Shader
   std::cout << "Compiling shader : " << vertex_file_path << std::endl;
-  char const * VertexSourcePointer = VertexShaderCode.c_str();
-  glShaderSource(VertexShaderID, 1, &VertexSourcePointer , NULL);
+  char const *VertexSourcePointer = VertexShaderCode.c_str();
+  glShaderSource(VertexShaderID, 1, &VertexSourcePointer, NULL);
   glCompileShader(VertexShaderID);
- 
+
   // Check Vertex Shader
   glGetShaderiv(VertexShaderID, GL_COMPILE_STATUS, &Result);
-  if (Result != GL_TRUE) {  
+  if (Result != GL_TRUE) {
     GLsizei log_length = 0;
     GLchar message[1024];
     glGetShaderInfoLog(VertexShaderID, 1024, &log_length, message);
@@ -448,13 +482,13 @@ GLuint LoadShaders(const std::string &vertex_file_path,const std::string &fragme
 
   // Compile Fragment Shader
   std::cout << "Compiling shader : " << fragment_file_path << std::endl;
-  char const * FragmentSourcePointer = FragmentShaderCode.c_str();
-  glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer , NULL);
+  char const *FragmentSourcePointer = FragmentShaderCode.c_str();
+  glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer, NULL);
   glCompileShader(FragmentShaderID);
- 
+
   // Check Fragment Shader
   glGetShaderiv(FragmentShaderID, GL_COMPILE_STATUS, &Result);
-  if (Result != GL_TRUE) {  
+  if (Result != GL_TRUE) {
     GLsizei log_length = 0;
     GLchar message[1024];
     glGetShaderInfoLog(FragmentShaderID, 1024, &log_length, message);
@@ -468,10 +502,10 @@ GLuint LoadShaders(const std::string &vertex_file_path,const std::string &fragme
   glAttachShader(ProgramID, VertexShaderID);
   glAttachShader(ProgramID, FragmentShaderID);
   glLinkProgram(ProgramID);
- 
+
   // Check the program
   glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
-  if (Result != GL_TRUE) {  
+  if (Result != GL_TRUE) {
     GLsizei log_length = 0;
     GLchar message[1024];
     glGetShaderInfoLog(ProgramID, 1024, &log_length, message);
@@ -489,7 +523,7 @@ GLuint LoadShaders(const std::string &vertex_file_path,const std::string &fragme
 // Functions related to error handling
 // ========================================================
 
-void GLCanvas::error_callback(int error, const char* description) {
+void GLCanvas::error_callback(int error, const char *description) {
   std::cerr << "ERROR CALLBACK: " << description << std::endl;
 }
 
@@ -522,13 +556,14 @@ int HandleGLError(const std::string &message, bool ignore) {
   while ((error = glGetError()) != GL_NO_ERROR) {
     if (!ignore) {
       if (message != "") {
-	std::cerr << "[" << message << "] ";
+        std::cerr << "[" << message << "] ";
       }
       std::cerr << "GL ERROR(" << i << ") " << WhichGLError(error) << std::endl;
     }
     i++;
   }
-  if (i == 0) return 1;
+  if (i == 0)
+    return 1;
   return 0;
 }
 

@@ -1,12 +1,12 @@
-#include "glCanvas.h"
 #include "camera.h"
+#include "glCanvas.h"
 
-#define _USE_MATH_DEFINES 
+#define _USE_MATH_DEFINES
 #include <cmath>
 
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/constants.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtx/transform.hpp>
 
 // ====================================================================
@@ -19,15 +19,15 @@ Camera::Camera(const glm::vec3 &c, const glm::vec3 &poi, const glm::vec3 &u) {
   up = glm::normalize(u);
 }
 
-OrthographicCamera::OrthographicCamera
-(const glm::vec3 &c, const glm::vec3 &poi, const glm::vec3 &u, float s) 
-  : Camera(c,poi,u) {
+OrthographicCamera::OrthographicCamera(const glm::vec3 &c, const glm::vec3 &poi,
+                                       const glm::vec3 &u, float s)
+    : Camera(c, poi, u) {
   size = s;
 }
 
-PerspectiveCamera::PerspectiveCamera
-(const glm::vec3 &c, const glm::vec3 &poi, const glm::vec3 &u, float a) 
-  : Camera(c,poi,u) {
+PerspectiveCamera::PerspectiveCamera(const glm::vec3 &c, const glm::vec3 &poi,
+                                     const glm::vec3 &u, float a)
+    : Camera(c, poi, u) {
   angle = a;
 }
 
@@ -48,16 +48,17 @@ void OrthographicCamera::glPlaceCamera() {
     h = size / 2.0;
     w = h * aspect;
   }
-  ProjectionMatrix = glm::ortho<float>(-w,w,-h,h, 0.1f, 100.0f) ;
-  ViewMatrix =  glm::lookAt(camera_position,point_of_interest,getScreenUp()) ;
+  ProjectionMatrix = glm::ortho<float>(-w, w, -h, h, 0.1f, 100.0f);
+  ViewMatrix = glm::lookAt(camera_position, point_of_interest, getScreenUp());
 }
 
 void PerspectiveCamera::glPlaceCamera() {
   glfwGetWindowSize(GLCanvas::window, &width, &height);
   float aspect = width / (float)height;
   // must convert angle from degrees to radians
-  ProjectionMatrix = glm::perspective<float>(glm::radians(angle), aspect, 0.1f, 1000.0f);
-  ViewMatrix =  glm::lookAt(camera_position,point_of_interest,getScreenUp()) ;
+  ProjectionMatrix =
+      glm::perspective<float>(glm::radians(angle), aspect, 0.1f, 1000.0f);
+  ViewMatrix = glm::lookAt(camera_position, point_of_interest, getScreenUp());
 }
 
 // ====================================================================
@@ -67,7 +68,7 @@ void PerspectiveCamera::glPlaceCamera() {
 void Camera::dollyCamera(float dist) {
   glm::vec3 diff = camera_position - point_of_interest;
   float d = glm::length(diff);
-  glm::vec3 translate = float(0.004*d*dist)*getDirection();
+  glm::vec3 translate = float(0.004 * d * dist) * getDirection();
   camera_position += translate;
 }
 
@@ -76,14 +77,16 @@ void Camera::dollyCamera(float dist) {
 // ====================================================================
 
 void OrthographicCamera::zoomCamera(float factor) {
-  size *= pow(1.003,factor);
+  size *= pow(1.003, factor);
 }
 
 void PerspectiveCamera::zoomCamera(float dist) {
-  angle *= pow(1.002,dist);
+  angle *= pow(1.002, dist);
   // put some reasonable limits on the camera angle (in degrees)
-  if (angle < 5) angle = 5;
-  if (angle > 175) angle = 175;
+  if (angle < 5)
+    angle = 5;
+  if (angle > 175)
+    angle = 175;
 }
 
 // ====================================================================
@@ -93,7 +96,8 @@ void PerspectiveCamera::zoomCamera(float dist) {
 void Camera::truckCamera(float dx, float dy) {
   glm::vec3 diff = camera_position - point_of_interest;
   float d = glm::length(diff);
-  glm::vec3 translate = (d*0.0007f)*(getHorizontal()*float(dx) + getScreenUp()*float(dy));
+  glm::vec3 translate =
+      (d * 0.0007f) * (getHorizontal() * float(dx) + getScreenUp() * float(dy));
   camera_position += translate;
   point_of_interest += translate;
 }
@@ -115,68 +119,72 @@ void Camera::rotateCamera(float rx, float ry) {
 
   // Note: There is a singularity at the poles (0 & 180 degrees) when
   // 'up' and 'direction' are aligned
-  float tiltAngle = acos(glm::dot(up,getDirection())) * 180 / glm::pi<float>();
+  float tiltAngle = acos(glm::dot(up, getDirection())) * 180 / glm::pi<float>();
   // float tiltAngle = acos(glm::dot(up,getDirection())) * 180 / M_PI;
   // float tiltAngle = acos(glm::dot(up,getDirection())) * 180 / 3.14159;
-  if (tiltAngle-ry > 178.0) 
-    ry = tiltAngle - 178.0; 
-  else if (tiltAngle-ry < 2.0) 
-    ry = tiltAngle - 2.0; 
+  if (tiltAngle - ry > 178.0)
+    ry = tiltAngle - 178.0;
+  else if (tiltAngle - ry < 2.0)
+    ry = tiltAngle - 2.0;
 
   glm::vec3 h = getHorizontal();
-  glm::mat4 m; 
-  m = glm::translate<GLfloat>(m,glm::vec3(point_of_interest));
-  m *= glm::rotate<GLfloat>(glm::radians(rx),up);
-  m *= glm::rotate<GLfloat>(glm::radians(ry),h);
-  m = glm::translate<GLfloat>(m,glm::vec3(-point_of_interest));
-  glm::vec4 tmp(camera_position,1);
+  glm::mat4 m;
+  m = glm::translate<GLfloat>(m, glm::vec3(point_of_interest));
+  m *= glm::rotate<GLfloat>(glm::radians(rx), up);
+  m *= glm::rotate<GLfloat>(glm::radians(ry), h);
+  m = glm::translate<GLfloat>(m, glm::vec3(-point_of_interest));
+  glm::vec4 tmp(camera_position, 1);
   tmp = m * tmp;
-  camera_position = glm::vec3(tmp.x,tmp.y,tmp.z);
+  camera_position = glm::vec3(tmp.x, tmp.y, tmp.z);
 }
 
 // ====================================================================
 // ====================================================================
 
-inline std::ostream& operator<<(std::ostream& ostr, const glm::vec3 &v) {
+inline std::ostream &operator<<(std::ostream &ostr, const glm::vec3 &v) {
   ostr << "<" << v.x << "," << v.y << "," << v.z << ">";
   return ostr;
 }
 
-inline std::istream& operator>>(std::istream& istr, glm::vec3 &v) {
+inline std::istream &operator>>(std::istream &istr, glm::vec3 &v) {
   char c;
-  istr >> c;  assert (c == '<');
+  istr >> c;
+  assert(c == '<');
   istr >> v.x;
-  istr >> c;  assert (c == ',');
+  istr >> c;
+  assert(c == ',');
   istr >> v.y;
-  istr >> c;  assert (c == ',');
+  istr >> c;
+  assert(c == ',');
   istr >> v.z;
-  istr >> c;  assert (c == '>');
+  istr >> c;
+  assert(c == '>');
   return istr;
 }
 
-std::ostream& operator<<(std::ostream &ostr, const Camera &c) {
-  const Camera* cp = &c;
-  if (dynamic_cast<const OrthographicCamera*>(cp)) {
-    const OrthographicCamera* ocp = (const OrthographicCamera*)cp;
+std::ostream &operator<<(std::ostream &ostr, const Camera &c) {
+  const Camera *cp = &c;
+  if (dynamic_cast<const OrthographicCamera *>(cp)) {
+    const OrthographicCamera *ocp = (const OrthographicCamera *)cp;
     ostr << *ocp << std::endl;
-  } else if (dynamic_cast<const PerspectiveCamera*>(cp)) {
-    const PerspectiveCamera* pcp = (const PerspectiveCamera*)cp;
+  } else if (dynamic_cast<const PerspectiveCamera *>(cp)) {
+    const PerspectiveCamera *pcp = (const PerspectiveCamera *)cp;
     ostr << *pcp << std::endl;
   }
   return ostr;
 }
 
-std::ostream& operator<<(std::ostream &ostr, const OrthographicCamera &c) {
+std::ostream &operator<<(std::ostream &ostr, const OrthographicCamera &c) {
   ostr << "OrthographicCamera {" << std::endl;
   ostr << "    camera_position   " << c.camera_position << std::endl;
   ostr << "    point_of_interest " << c.point_of_interest << std::endl;
-  ostr << "    up                " << c.up << std::endl; 
+  ostr << "    up                " << c.up << std::endl;
   ostr << "    size              " << c.size << std::endl;
   ostr << "}" << std::endl;
   return ostr;
-}    
+}
 
-std::ostream& operator<<(std::ostream &ostr, const PerspectiveCamera &c) {
+std::ostream &operator<<(std::ostream &ostr, const PerspectiveCamera &c) {
   ostr << "PerspectiveCamera {" << std::endl;
   ostr << "  camera_position    " << c.camera_position << std::endl;
   ostr << "  point_of_interest  " << c.point_of_interest << std::endl;
@@ -186,34 +194,44 @@ std::ostream& operator<<(std::ostream &ostr, const PerspectiveCamera &c) {
   return ostr;
 }
 
-
-std::istream& operator>>(std::istream &istr, OrthographicCamera &c) {
+std::istream &operator>>(std::istream &istr, OrthographicCamera &c) {
   std::string token;
-  istr >> token; assert (token == "{");
-  istr >> token; assert (token == "camera_position");
+  istr >> token;
+  assert(token == "{");
+  istr >> token;
+  assert(token == "camera_position");
   istr >> c.camera_position;
-  istr >> token; assert (token == "point_of_interest");
+  istr >> token;
+  assert(token == "point_of_interest");
   istr >> c.point_of_interest;
-  istr >> token; assert (token == "up");
-  istr >> c.up; 
-  istr >> token; assert (token == "size");
-  istr >> c.size; 
-  istr >> token; assert (token == "}");
-  return istr;
-}    
-
-std::istream& operator>>(std::istream &istr, PerspectiveCamera &c) {
-  std::string token;
-  istr >> token; assert (token == "{");
-  istr >> token; assert (token == "camera_position");
-  istr >> c.camera_position;
-  istr >> token; assert (token == "point_of_interest");
-  istr >> c.point_of_interest;
-  istr >> token; assert (token == "up");
-  istr >> c.up; 
-  istr >> token; assert (token == "angle");
-  istr >> c.angle;
-  istr >> token; assert (token == "}");
+  istr >> token;
+  assert(token == "up");
+  istr >> c.up;
+  istr >> token;
+  assert(token == "size");
+  istr >> c.size;
+  istr >> token;
+  assert(token == "}");
   return istr;
 }
 
+std::istream &operator>>(std::istream &istr, PerspectiveCamera &c) {
+  std::string token;
+  istr >> token;
+  assert(token == "{");
+  istr >> token;
+  assert(token == "camera_position");
+  istr >> c.camera_position;
+  istr >> token;
+  assert(token == "point_of_interest");
+  istr >> c.point_of_interest;
+  istr >> token;
+  assert(token == "up");
+  istr >> c.up;
+  istr >> token;
+  assert(token == "angle");
+  istr >> c.angle;
+  istr >> token;
+  assert(token == "}");
+  return istr;
+}
