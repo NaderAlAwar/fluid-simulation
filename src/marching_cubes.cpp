@@ -1,5 +1,6 @@
-#include "marching_cubes.h"
 #include "glCanvas.h"
+
+#include "marching_cubes.h"
 #include "utils.h"
 
 // ============================================================================

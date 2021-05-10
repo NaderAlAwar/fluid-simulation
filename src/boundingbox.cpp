@@ -1,5 +1,6 @@
-#include "boundingbox.h"
 #include "glCanvas.h"
+
+#include "boundingbox.h"
 #include "utils.h"
 #include "vbo_structs.h"
 #include <iostream>
