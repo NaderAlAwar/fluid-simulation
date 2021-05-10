@@ -9,9 +9,10 @@
 class FluidParticle {
 public:
   // accessor
-  const glm::vec3& getPosition() const { return position; }
+  const glm::vec3 &getPosition() const { return position; }
   // modifer
   void setPosition(const glm::vec3 &p) { position = p; }
+
 private:
   // representation
   glm::vec3 position;
@@ -23,12 +24,11 @@ enum CELL_STATUS { CELL_EMPTY, CELL_SURFACE, CELL_FULL };
 class Cell {
 
 public:
-
   // ========================
   // CONSTRUCTOR & DESTRUCTOR
-  Cell() { 
+  Cell() {
     pressure = 0;
-    status = CELL_SURFACE; 
+    status = CELL_SURFACE;
     u_plus = 0;
     v_plus = 0;
     w_plus = 0;
@@ -36,11 +36,12 @@ public:
     new_v_plus = 0;
     new_w_plus = 0;
   }
-  ~Cell() { 
+  ~Cell() {
     for (unsigned int i = 0; i < particles.size(); i++) {
-      delete particles[i]; }
+      delete particles[i];
+    }
   }
-  
+
   // =========
   // ACCESSORS
   double getPressure() const { return pressure; }
@@ -52,7 +53,7 @@ public:
   double get_new_v_plus() const { return new_v_plus; }
   double get_new_w_plus() const { return new_w_plus; }
   int numParticles() const { return particles.size(); }
-  std::vector<FluidParticle*>& getParticles() { return particles; }
+  std::vector<FluidParticle *> &getParticles() { return particles; }
 
   // =========
   // MODIFIERS
@@ -67,38 +68,41 @@ public:
   void adjust_new_u_plus(double f) { new_u_plus += f; }
   void adjust_new_v_plus(double f) { new_v_plus += f; }
   void adjust_new_w_plus(double f) { new_w_plus += f; }
-  void copyVelocity() { 
-    u_plus = new_u_plus; new_u_plus = 0;
-    v_plus = new_v_plus; new_v_plus = 0;
-    w_plus = new_w_plus; new_w_plus = 0; 
+  void copyVelocity() {
+    u_plus = new_u_plus;
+    new_u_plus = 0;
+    v_plus = new_v_plus;
+    new_v_plus = 0;
+    w_plus = new_w_plus;
+    new_w_plus = 0;
   }
   void addParticle(FluidParticle *p) {
     assert(p != NULL);
-    particles.push_back(p); 
+    particles.push_back(p);
   }
   void removeParticle(FluidParticle *p) {
     assert(p != NULL);
-    for (std::vector<FluidParticle*>::iterator i = particles.begin(); i != particles.end(); i++) {
+    for (std::vector<FluidParticle *>::iterator i = particles.begin();
+         i != particles.end(); i++) {
       if (*i == p) {
         particles.erase(i);
         return;
       }
     }
-    assert (0); 
+    assert(0);
   }
 
 private:
-
   // ==============
   // REPRESENTATION
   double pressure;
   enum CELL_STATUS status;
 
   // velocities at the center of each face (flowing in the positive direction)
-  double u_plus,v_plus,w_plus;
-  double new_u_plus,new_v_plus,new_w_plus;
+  double u_plus, v_plus, w_plus;
+  double new_u_plus, new_v_plus, new_w_plus;
 
-  std::vector<FluidParticle*> particles;
+  std::vector<FluidParticle *> particles;
 };
 
 // ==============================================================================

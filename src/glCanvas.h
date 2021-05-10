@@ -7,9 +7,9 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <cassert>
 #include <cstdio>
 #include <cstdlib>
-#include <cassert>
 #include <string>
 
 #include "boundingbox.h"
@@ -26,14 +26,13 @@ class Camera;
 class GLCanvas {
 
 public:
-
   // various static variables
   static ArgParser *args;
-  static Cloth* cloth;
-  static Fluid* fluid;
+  static Cloth *cloth;
+  static Fluid *fluid;
   static BoundingBox bbox;
-  static Camera* camera;
-  static GLFWwindow* window;
+  static Camera *camera;
+  static GLFWwindow *window;
 
   static GLuint ViewMatrixID;
   static GLuint ModelMatrixID;
@@ -42,7 +41,7 @@ public:
   static GLuint programID;
   static GLuint colormodeID;
   static GLuint wireframeID;
-  
+
   // mouse position
   static int mouseX;
   static int mouseY;
@@ -62,22 +61,27 @@ public:
   static void Load();
   static void initializeVBOs();
   static void setupVBOs();
-  static void drawVBOs(const glm::mat4 &ProjectionMatrix,const glm::mat4 &ViewMatrix,const glm::mat4 &ModelMatrix);
+  static void drawVBOs(const glm::mat4 &ProjectionMatrix,
+                       const glm::mat4 &ViewMatrix,
+                       const glm::mat4 &ModelMatrix);
   static void cleanupVBOs();
 
   static void animate();
 
   // Callback functions for mouse and keyboard events
-  static void mousebuttonCB(GLFWwindow *window, int which_button, int action, int mods);
+  static void mousebuttonCB(GLFWwindow *window, int which_button, int action,
+                            int mods);
   static void mousemotionCB(GLFWwindow *window, double x, double y);
-  static void keyboardCB(GLFWwindow *window, int key, int scancode, int action, int mods);
-  static void error_callback(int error, const char* description);
+  static void keyboardCB(GLFWwindow *window, int key, int scancode, int action,
+                         int mods);
+  static void error_callback(int error, const char *description);
 };
 
 // ====================================================================
 
 // helper functions
-GLuint LoadShaders(const std::string &vertex_file_path,const std::string &fragment_file_path);
+GLuint LoadShaders(const std::string &vertex_file_path,
+                   const std::string &fragment_file_path);
 std::string WhichGLError(GLenum &error);
 int HandleGLError(const std::string &message = "", bool ignore = false);
 
