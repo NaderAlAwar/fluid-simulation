@@ -107,35 +107,24 @@ void Camera::truckCamera(float dx, float dy) {
 // ====================================================================
 
 // adjust this number if desired
-#define ROTATE_SPEED 0.2
+#define ROTATE_SPEED 0.05
 
 void Camera::rotateCamera(float rx, float ry) {
 
   // this version of rotate doesn't let the model flip "upside-down"
 
-  // slow the mouse down a little
-  rx *= ROTATE_SPEED;
-  ry *= ROTATE_SPEED;
-
-  // Note: There is a singularity at the poles (0 & 180 degrees) when
-  // 'up' and 'direction' are aligned
-  float tiltAngle = acos(glm::dot(up, getDirection())) * 180 / glm::pi<float>();
-  // float tiltAngle = acos(glm::dot(up,getDirection())) * 180 / M_PI;
-  // float tiltAngle = acos(glm::dot(up,getDirection())) * 180 / 3.14159;
-  if (tiltAngle - ry > 178.0)
-    ry = tiltAngle - 178.0;
-  else if (tiltAngle - ry < 2.0)
-    ry = tiltAngle - 2.0;
-
-  glm::vec3 h = getHorizontal();
-  glm::mat4 m;
-  m = glm::translate<GLfloat>(m, glm::vec3(point_of_interest));
-  m *= glm::rotate<GLfloat>(glm::radians(rx), up);
-  m *= glm::rotate<GLfloat>(glm::radians(ry), h);
-  m = glm::translate<GLfloat>(m, glm::vec3(-point_of_interest));
   glm::vec4 tmp(camera_position, 1);
-  tmp = m * tmp;
-  camera_position = glm::vec3(tmp.x, tmp.y, tmp.z);
+  glm::vec4 tmpUp(camera_position + up, 1);
+
+  glm::vec3 axis = -ry * getHorizontal() + rx * up;
+  tmpUp = glm::rotate<GLfloat>(ROTATE_SPEED, axis) * tmpUp;
+  tmp = glm::rotate<GLfloat>(ROTATE_SPEED, axis) * tmp;
+  tmpUp -= tmp;
+
+  for (int i = 0; i < 3; i++) {
+    up[i] = tmpUp[i];
+    camera_position[i] = tmp[i];
+  }
 }
 
 // ====================================================================
