@@ -4,3 +4,13 @@
 4) Obstacles
 5) Add better scenes: waterfall, etc.
 6) Better rendering + visualization
+
+Scenes:
+1) Firing a canonball into a body of water. Includes smoke + fluid.
+2) Volcano erupting with smoke + lava. Later on it rains on the lava, causing steam. Lava flows down a staircase.
+3) Water freezing as it hits the right wall of the dam, and then the ice propagates to the left
+4) bomb/iron man
+
+Other:
+1) Move camera
+2) Add user interaction
