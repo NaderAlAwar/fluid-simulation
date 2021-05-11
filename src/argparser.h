@@ -85,8 +85,8 @@ public:
   }
 
   void DefaultValues() {
-    width = 500;
-    height = 500;
+    width = 2000;
+    height = 1000;
 
     timestep = 0.01;
     animate = false;
