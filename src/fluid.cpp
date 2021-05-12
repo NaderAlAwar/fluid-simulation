@@ -118,6 +118,9 @@ void Fluid::Load() {
   }
   // read in custom velocities
   while (istr >> token) {
+    if (token == "barrier_cells")
+      break;
+
     int i, j, k;
     double velocity;
     assert(token == "u" || token == "v" || token == "w");
@@ -134,6 +137,22 @@ void Fluid::Load() {
     else
       assert(0);
   }
+
+  if (token == "barrier_cells") {
+    while (istr >> token) {
+      int i, j, k;
+
+      istr >> i >> j >> k;
+      assert(i >= 0 && i < nx);
+      assert(j >= 0 && j < ny);
+      assert(k >= 0 && k < nz);
+
+      barrierCells.emplace(i, j, k);
+    }
+  }
+
+  std::cout << barrierCells.size() << '\n';
+
   SetBoundaryVelocities();
 }
 
@@ -147,6 +166,8 @@ bool Fluid::inShape(glm::vec3 &pos, const std::string &shape) {
   } else if (shape == "left") {
     // a blob of particles on the lower left (for the dam)
     return (pos.x < 0.2 * nx * dx && pos.y < 0.5 * ny * dy);
+  } else if (shape == "top_left") {
+    return (pos.x < 0.1 * nx * dx && pos.y > 0.85 * ny * dy);
   } else if (shape == "drop") {
     // a shallow pool of particles on the bottom
     double h = ny * dy / 6.0;
@@ -216,12 +237,14 @@ void Fluid::Animate() {
 
   ComputeNewVelocities();
   SetBoundaryVelocities();
+  SetBarrierVelocities();
 
   // compressible / incompressible flow
   if (compressible == false) {
     for (int iters = 0; iters < 20; iters++) {
       double max_divergence = AdjustForIncompressibility();
       SetBoundaryVelocities();
+      SetBarrierVelocities();
       if (max_divergence < EPSILON)
         break;
     }
@@ -391,6 +414,23 @@ void Fluid::SetBoundaryVelocities() {
       getCell(nx, j, k)->set_w_plus(yz_sign *
                                     getCell(nx - 1, j, k)->get_w_plus());
     }
+  }
+}
+
+// ==============================================================
+
+void Fluid::SetBarrierVelocities() {
+  for (const auto& barrier : barrierCells) {
+    int i, j, k;
+    std::tie(i, j, k) = barrier;
+
+    getCell(i, j, k)->set_new_u_plus(0);
+    getCell(i, j, k)->set_new_v_plus(0);
+    getCell(i, j, k)->set_new_w_plus(0);
+
+    getCell(i - 1, j, k)->set_new_u_plus(0);
+    getCell(i, j - 1, k)->set_new_v_plus(0);
+    getCell(i, j, k - 1)->set_new_w_plus(0);
   }
 }
 

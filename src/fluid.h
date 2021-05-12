@@ -6,6 +6,8 @@
 #include "cell.h"
 #include "vbo_structs.h"
 #include <cassert>
+#include <set>
+#include <tuple>
 #include <vector>
 
 class ArgParser;
@@ -52,6 +54,7 @@ private:
   // ANIMATION HELPERS
   void ComputeNewVelocities();
   void SetBoundaryVelocities();
+  void SetBarrierVelocities();
   void EmptyVelocities(int i, int j, int k);
   void CopyVelocities();
   double AdjustForIncompressibility();
@@ -150,6 +153,7 @@ private:
   int nx, ny, nz;    // number of grid cells in each dimension
   double dx, dy, dz; // dimensions of each grid cell
   Cell *cells;       // NOTE: padded with extra cells on each side
+  std::set<std::tuple<int, int, int>> barrierCells;
 
   // simulation parameters
   bool xy_free_slip;
