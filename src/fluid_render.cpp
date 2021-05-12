@@ -19,6 +19,7 @@ void Fluid::initializeVBOs() {
   glGenBuffers(1, &fluid_facevelocity_verts_VBO);
   glGenBuffers(1, &fluid_facevelocity_tri_indices_VBO);
   glGenBuffers(1, &fluid_pressure_vis_VBO);
+  glGenBuffers(1, &fluid_barrier_vis_VBO);
   glGenBuffers(1, &fluid_cell_type_vis_VBO);
   marchingCubes->initializeVBOs();
 }
@@ -32,6 +33,7 @@ void Fluid::setupVBOs() {
   fluid_facevelocity_verts.clear();
   fluid_facevelocity_tri_indices.clear();
   fluid_pressure_vis.clear();
+  fluid_barrier_vis.clear();
   fluid_cell_type_vis.clear();
 
   float thickness = 0.002 * GLCanvas::bbox.maxDim();
@@ -51,6 +53,27 @@ void Fluid::setupVBOs() {
         }
       }
     }
+  }
+
+  // =====================================================================================
+  // visualize the velocity
+  // =====================================================================================
+
+  for (const auto& barrier: barrierCells) {
+    int i, j, k;
+    std::tie(i, j, k) = barrier;
+    glm::vec3 pts[8] = {
+        glm::vec3((i) * dx, (j) * dy, (k) * dz),
+        glm::vec3((i) * dx, (j) * dy, (k + 1) * dz),
+        glm::vec3((i) * dx, (j + 1) * dy, (k) * dz),
+        glm::vec3((i) * dx, (j + 1) * dy, (k + 1) * dz),
+        glm::vec3((i + 1) * dx, (j) * dy, (k) * dz),
+        glm::vec3((i + 1) * dx, (j) * dy, (k + 1) * dz),
+        glm::vec3((i + 1) * dx, (j + 1) * dy, (k) * dz),
+        glm::vec3((i + 1) * dx, (j + 1) * dy, (k + 1) * dz)};
+
+    glm::vec3 color(0.3, 0.3, 0.3);
+    setupCubeVBO(pts, color, fluid_barrier_vis);
   }
 
   // =====================================================================================
@@ -257,6 +280,14 @@ void Fluid::setupVBOs() {
                  sizeof(VBOPosNormalColor) * fluid_pressure_vis.size(),
                  &fluid_pressure_vis[0], GL_STATIC_DRAW);
   }
+
+  if (fluid_barrier_vis.size() > 0) {
+    glBindBuffer(GL_ARRAY_BUFFER, fluid_barrier_vis_VBO);
+    glBufferData(GL_ARRAY_BUFFER,
+                 sizeof(VBOPosNormalColor) * fluid_barrier_vis.size(),
+                 &fluid_barrier_vis[0], GL_STATIC_DRAW);
+  }
+
   if (fluid_cell_type_vis.size() > 0) {
     glBindBuffer(GL_ARRAY_BUFFER, fluid_cell_type_vis_VBO);
     glBufferData(GL_ARRAY_BUFFER,
@@ -373,6 +404,27 @@ void Fluid::drawVBOs() {
   }
 
   // =====================================================================================
+  // visualize the barriers
+  // =====================================================================================
+  if (fluid_barrier_vis.size() > 0) {
+    glUniform1i(GLCanvas::colormodeID, 1);
+    glBindBuffer(GL_ARRAY_BUFFER, fluid_barrier_vis_VBO);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(glm::vec3),
+                          (void *)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(glm::vec3),
+                          (void *)sizeof(glm::vec3));
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(glm::vec3),
+                          (void *)(sizeof(glm::vec3) * 2));
+    glDrawArrays(GL_TRIANGLES, 0, fluid_barrier_vis.size());
+    glDisableVertexAttribArray(0);
+    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(2);
+  }
+
+  // =====================================================================================
   // render the MAC cells (FULL, SURFACE, or EMPTY)
   // =====================================================================================
   if (args->cubes && fluid_cell_type_vis.size() > 0) {
@@ -409,6 +461,7 @@ void Fluid::cleanupVBOs() {
   glDeleteBuffers(1, &fluid_facevelocity_verts_VBO);
   glDeleteBuffers(1, &fluid_facevelocity_tri_indices_VBO);
   glDeleteBuffers(1, &fluid_pressure_vis_VBO);
+  glDeleteBuffers(1, &fluid_barrier_vis_VBO);
   glDeleteBuffers(1, &fluid_cell_type_vis_VBO);
   marchingCubes->cleanupVBOs();
 }

@@ -170,6 +170,7 @@ private:
   GLuint fluid_facevelocity_verts_VBO;
   GLuint fluid_facevelocity_tri_indices_VBO;
   GLuint fluid_pressure_vis_VBO;
+  GLuint fluid_barrier_vis_VBO;
   GLuint fluid_cell_type_vis_VBO;
 
   std::vector<VBOPosNormalColor> fluid_particles;
@@ -178,6 +179,7 @@ private:
   std::vector<VBOPosNormalColor> fluid_facevelocity_verts;
   std::vector<VBOIndexedTri> fluid_facevelocity_tri_indices;
   std::vector<VBOPosNormalColor> fluid_pressure_vis;
+  std::vector<VBOPosNormalColor> fluid_barrier_vis;
   std::vector<VBOPosNormalColor> fluid_cell_type_vis;
 
   // Helper class to display an isosurface
