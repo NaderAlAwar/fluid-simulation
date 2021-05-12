@@ -9,7 +9,7 @@ viscosity 0.25
 gravity 1
 
 initial_particles top_left random
-density 2
+density 15
 
 initial_velocity zero
 
