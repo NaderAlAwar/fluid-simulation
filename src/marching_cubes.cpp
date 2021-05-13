@@ -262,14 +262,84 @@ void MarchingCubes::PaintTetraHelper1(const GridValue &a, const GridValue &b,
 
 // ============================================================================
 
+double MarchingCubes::getInterpolatedValue(const glm::vec3 &p1) const {
+  int i = int(floor(p1.x / dx));
+  int j = int(floor(p1.y / dy));
+  int k = int(floor(p1.z / dz));
+
+  double interpolated_value = 0;
+  int count = 0;
+
+  for (int di = -1; di <= 1; di++) {
+    for (int dj = -1; dj <= 1; dj++) {
+      for (int dk = -1; dk <= 1; dk++) {
+        if (i + di < 0 || j + dj < 0 || k + dk < 0
+            || i + di >= nx || j + dj >= ny || k + dk >= nz)
+          continue;
+
+        double cx = dx * (i + di) + (dx / 2);
+        double cy = dy * (j + dj) + (dy / 2);
+        double cz = dz * (k + dk) + (dz / 2);
+
+        double width, height, depth;
+
+        // Calculating u
+        width = dx - abs(p1.x - cx);
+        height = dy - abs(p1.y - cy);
+        depth = dz - abs(p1.z - cz);
+
+        if (width >= 0 && height >= 0 && depth >= 0) {
+          count++;
+          double value = get(i + di, j + dj, k + dk);
+          interpolated_value += value * width * height * depth;
+        }
+      }
+    }
+  }
+
+  interpolated_value /= dx * dy * dz * 2;
+
+  return interpolated_value;
+}
+
+glm::vec3 MarchingCubes::getColor(const glm::vec3 &p1) const {
+  float value = (float) getInterpolatedValue(p1);
+
+  if (value == 0)
+    return glm::vec3(0, 1, 0);
+
+  glm::vec3 color;
+  if (type == "water") {
+    color = glm::vec3(0, 0, 1);
+    color *= value;
+  } else if (type == "lava") {
+    glm::vec3 red(0.8, 0, 0);
+    glm::vec3 brown(0.2, 0.1, 0.1);
+    glm::vec3 yellow(1, 1, 0);
+
+    float threshold = 0.75;
+    if (value < threshold) {
+      value /= threshold;
+      color = (1 - value) * yellow + value * red;
+    } else {
+      value = (value - threshold) / threshold;
+      color = (1 - value) * red + value * brown;
+    }
+  } else {
+    color = glm::vec3(1, 1, 1);
+    color *= value;
+  }
+
+  return color;
+}
+
 void MarchingCubes::drawTriangleWithNormals(
     const glm::vec3 &n1, const glm::vec3 &p1, const glm::vec3 &n2,
     const glm::vec3 &p2, const glm::vec3 &n3, const glm::vec3 &p3) {
   int num_marching_cubes_tris = marching_cubes_tri_indices.size();
-  glm::vec3 color(0, 0, 1);
-  marching_cubes_verts.push_back(VBOPosNormalColor(p1, n1, color));
-  marching_cubes_verts.push_back(VBOPosNormalColor(p2, n2, color));
-  marching_cubes_verts.push_back(VBOPosNormalColor(p3, n3, color));
+  marching_cubes_verts.push_back(VBOPosNormalColor(p1, n1, getColor(p1)));
+  marching_cubes_verts.push_back(VBOPosNormalColor(p2, n2, getColor(p2)));
+  marching_cubes_verts.push_back(VBOPosNormalColor(p3, n3, getColor(p3)));
   marching_cubes_tri_indices.push_back(VBOIndexedTri(
       num_marching_cubes_tris * 3 + 0, num_marching_cubes_tris * 3 + 1,
       num_marching_cubes_tris * 3 + 2));

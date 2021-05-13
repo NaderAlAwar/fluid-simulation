@@ -23,7 +23,7 @@
 Fluid::Fluid(ArgParser *_args) {
   args = _args;
   Load();
-  marchingCubes = new MarchingCubes(nx + 1, ny + 1, nz + 1, dx, dy, dz);
+  marchingCubes = new MarchingCubes(nx + 1, ny + 1, nz + 1, dx, dy, dz, args->fluid_type);
   SetEmptySurfaceFull();
 }
 

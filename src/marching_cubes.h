@@ -24,8 +24,8 @@ public:
 class MarchingCubes {
 
 public:
-  MarchingCubes(int _nx, int _ny, int _nz, double _dx, double _dy, double _dz)
-      : nx(_nx), ny(_ny), nz(_nz), dx(_dx), dy(_dy), dz(_dz) {
+  MarchingCubes(int _nx, int _ny, int _nz, double _dx, double _dy, double _dz, const std::string& _type)
+      : nx(_nx), ny(_ny), nz(_nz), dx(_dx), dy(_dy), dz(_dz), type(_type) {
     values = new double[nx * ny * nz];
   }
   ~MarchingCubes() { delete[] values; }
@@ -102,11 +102,14 @@ private:
   void drawTriangleWithNormals(const glm::vec3 &n1, const glm::vec3 &p1,
                                const glm::vec3 &n2, const glm::vec3 &p2,
                                const glm::vec3 &n3, const glm::vec3 &p3);
+  double getInterpolatedValue(const glm::vec3 &p1) const;
+  glm::vec3 getColor(const glm::vec3 &p1) const;
 
   // ==============
   // REPRESENTATION
   int nx, ny, nz;
   double dx, dy, dz;
+  std::string type;
   double *values;
 
   GLuint marching_cubes_verts_VBO;

@@ -69,6 +69,10 @@ public:
         assert(i < argc);
         timestep = atof(argv[i]);
         assert(timestep > 0);
+      } else if (argv[i] == std::string("-fluid_type")) {
+        i++;
+        assert(i < argc);
+        fluid_type = argv[i];
       } else {
         std::cout << "ERROR: unknown command line argument " << i << ": '"
                   << argv[i] << "'" << std::endl;
@@ -105,6 +109,7 @@ public:
     bounding_box = true;
     cubes = false;
     pressure = false;
+    fluid_type = "other";
 
     gravity = glm::vec3(0, -9.8, 0);
 
@@ -132,6 +137,7 @@ public:
   bool velocity;
   bool surface;
   bool bounding_box;
+  std::string fluid_type;
 
   // used by cloth
   bool force;
