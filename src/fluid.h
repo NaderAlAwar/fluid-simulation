@@ -153,7 +153,9 @@ private:
   int nx, ny, nz;    // number of grid cells in each dimension
   double dx, dy, dz; // dimensions of each grid cell
   Cell *cells;       // NOTE: padded with extra cells on each side
+  int steps;
   std::set<std::tuple<int, int, int>> barrierCells;
+  std::vector<std::tuple<std::string, std::string>> sources;
 
   // simulation parameters
   bool xy_free_slip;

@@ -21,6 +21,7 @@
 // ==============================================================
 
 Fluid::Fluid(ArgParser *_args) {
+  steps = 0;
   args = _args;
   Load();
   marchingCubes = new MarchingCubes(nx + 1, ny + 1, nz + 1, dx, dy, dz, args->fluid_type);
@@ -118,7 +119,7 @@ void Fluid::Load() {
   }
   // read in custom velocities
   while (istr >> token) {
-    if (token == "barrier_cells")
+    if (token == "barrier_cells" || token == "sources")
       break;
 
     int i, j, k;
@@ -140,6 +141,9 @@ void Fluid::Load() {
 
   if (token == "barrier_cells") {
     while (istr >> token) {
+      if (token == "sources")
+        break;
+
       int i, j, k;
 
       istr >> i >> j >> k;
@@ -148,6 +152,17 @@ void Fluid::Load() {
       assert(k >= 0 && k < nz);
 
       barrierCells.emplace(i, j, k);
+    }
+  }
+
+  if (token == "sources") {
+    while (istr >> token) {
+      std::string shape;
+      std::string placement;
+
+      istr >> shape >> placement;
+
+      sources.emplace_back(shape, placement);
     }
   }
 
@@ -234,6 +249,11 @@ void Fluid::GenerateParticles(const std::string &shape,
 void Fluid::Animate() {
 
   // the animation manager:  this is what gets done each timestep!
+  if (steps % 10000 == 0) {
+    for (const auto& s : sources) {
+      GenerateParticles(std::get<0>(s), std::get<1>(s));
+    }
+  }
 
   ComputeNewVelocities();
   SetBoundaryVelocities();
@@ -259,6 +279,8 @@ void Fluid::Animate() {
   SetEmptySurfaceFull();
 
   setupVBOs();
+
+  steps++;
 }
 
 // ==============================================================

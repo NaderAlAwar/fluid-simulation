@@ -12,3 +12,6 @@ initial_particles drop uniform
 density 8
 
 initial_velocity zero
+
+sources
+s top_left uniform
