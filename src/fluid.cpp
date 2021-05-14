@@ -249,7 +249,10 @@ void Fluid::GenerateParticles(const std::string &shape,
 void Fluid::Animate() {
 
   // the animation manager:  this is what gets done each timestep!
-  if (steps % 10000 == 0) {
+  int new_particles = 3000;
+  int new_barriers = 2000;
+
+  if (steps % new_particles == 0) {
     for (const auto& s : sources) {
       GenerateParticles(std::get<0>(s), std::get<1>(s));
     }
@@ -271,6 +274,10 @@ void Fluid::Animate() {
   }
 
   UpdatePressures();
+
+  if (steps % new_barriers == 0 && steps > 0)
+    CreateNewBarriers();
+
   CopyVelocities();
 
   // advanced the particles through the fluid
@@ -652,7 +659,7 @@ void Fluid::SetEmptySurfaceFull() {
     for (j = 0; j < ny; j++) {
       for (k = 0; k < nz; k++) {
         Cell *cell = getCell(i, j, k);
-        if (cell->numParticles() == 0)
+        if (cell->numParticles() == 0 && barrierCells.count({i, j, k}) == 0)
           cell->setStatus(CELL_EMPTY);
         else
           cell->setStatus(CELL_FULL);
@@ -740,4 +747,35 @@ glm::vec3 Fluid::getInterpolatedVelocity(const glm::vec3 &pos) const {
   interpolated /= (dx * dy * dz);
 
   return interpolated;
+}
+
+// ==============================================================
+
+void Fluid::CreateNewBarriers() {
+  for (int i = 0; i < nx; i++) {
+    for (int j = 0; j < ny; j++) {
+      for (int k = 0; k < nz; k++) {
+        Cell *c = getCell(i, j, k);
+
+        if (c->getStatus() != CELL_EMPTY) {
+          float norm1 = glm::length(glm::vec3(c->get_new_u_plus(), c->get_new_v_plus(), c->get_new_w_plus()));
+          float norm2 = glm::length(glm::vec3(get_new_u_plus(i - 1, j, k), get_new_v_plus(i, j - 1, k), get_new_w_plus(i, j, k - 1)));
+          if (norm1 < EPSILON * 100 && norm2 < EPSILON * 100) {
+            c->setStatus(CELL_EMPTY);
+            c->deleteAllParticles();
+            barrierCells.emplace(i, j, k);
+          }
+        }
+
+        // if (c->getStatus() == CELL_FULL) {
+        //   c->setStatus(CELL_SURFACE);
+        //   c->deleteAllParticles();
+        //   barrierCells.emplace(i, j, k);
+        // } else if (c->getStatus() == CELL_SURFACE) {
+        //   c->setStatus(CELL_EMPTY);
+        //   c->deleteAllParticles();
+        // }
+      }
+    }
+  }
 }

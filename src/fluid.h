@@ -62,6 +62,7 @@ private:
   void MoveParticles();
   void ReassignParticles();
   void SetEmptySurfaceFull();
+  void CreateNewBarriers();
 
   // =====================
   // NAVIER-STOKES HELPERS

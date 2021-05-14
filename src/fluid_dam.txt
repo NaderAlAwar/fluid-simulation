@@ -13,6 +13,3 @@ initial_particles left random
 density 15
 
 initial_velocity zero
-
-sources
-s top_left uniform

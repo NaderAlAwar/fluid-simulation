@@ -91,6 +91,12 @@ public:
     }
     assert(0);
   }
+  void deleteAllParticles() {
+    for (auto &p: particles)
+      delete p;
+
+    particles.clear();
+  }
 
 private:
   // ==============
