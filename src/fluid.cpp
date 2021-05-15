@@ -194,6 +194,14 @@ bool Fluid::inShape(glm::vec3 &pos, const std::string &shape) {
     if (length < 0.8 * h)
       return true;
     return false;
+  } else if (shape == "middle") {
+    double h = ny * dy / 6.0;
+
+    glm::vec3 center = glm::vec3(nx * dx * 0.5, 5 * h, nz * dz * 0.5);
+    double length = glm::length(center - pos);
+    if (length < 0.8 * h)
+      return true;
+    return false;
   } else {
     std::cout << "unknown shape: " << shape << std::endl;
     exit(0);
@@ -275,8 +283,8 @@ void Fluid::Animate() {
 
   UpdatePressures();
 
-  if (steps % new_barriers == 0 && steps > 0)
-    CreateNewBarriers();
+  // if (steps % new_barriers == 0 && steps > 0)
+  //   CreateNewBarriers();
 
   CopyVelocities();
 
@@ -659,7 +667,8 @@ void Fluid::SetEmptySurfaceFull() {
     for (j = 0; j < ny; j++) {
       for (k = 0; k < nz; k++) {
         Cell *cell = getCell(i, j, k);
-        if (cell->numParticles() == 0 && barrierCells.count({i, j, k}) == 0)
+        // if (cell->numParticles() == 0 && barrierCells.count({i, j, k}) == 0)
+        if (cell->numParticles() == 0)
           cell->setStatus(CELL_EMPTY);
         else
           cell->setStatus(CELL_FULL);
