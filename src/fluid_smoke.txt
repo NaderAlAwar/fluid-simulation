@@ -1,0 +1,48 @@
+grid 64 60 4
+cell_dimensions 0.01 0.01 0.01
+
+flow incompressible
+xy_boundary free_slip
+yz_boundary free_slip
+zx_boundary free_slip
+viscosity 0.001
+gravity -1
+
+initial_particles bottom uniform
+density 8
+
+initial_velocity zero
+
+v 31 0 0 4
+
+barrier_cells
+
+c 31 29 0
+c 31 29 1
+c 31 29 2
+c 31 29 3
+
+c 32 29 0
+c 32 29 1
+c 32 29 2
+c 32 29 3
+
+c 33 29 0
+c 33 29 1
+c 33 29 2
+c 33 29 3
+
+c 34 29 0
+c 34 29 1
+c 34 29 2
+c 34 29 3
+
+c 30 29 0
+c 30 29 1
+c 30 29 2
+c 30 29 3
+
+c 29 29 0
+c 29 29 1
+c 29 29 2
+c 29 29 3
