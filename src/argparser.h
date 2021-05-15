@@ -73,6 +73,8 @@ public:
         i++;
         assert(i < argc);
         fluid_type = argv[i];
+      } else if (argv[i] == std::string("-enable_jets")) {
+        enable_jets = true;
       } else {
         std::cout << "ERROR: unknown command line argument " << i << ": '"
                   << argv[i] << "'" << std::endl;
@@ -110,6 +112,7 @@ public:
     cubes = false;
     pressure = false;
     fluid_type = "other";
+    enable_jets = false;
 
     gravity = glm::vec3(0, -9.8, 0);
 
@@ -138,6 +141,7 @@ public:
   bool surface;
   bool bounding_box;
   std::string fluid_type;
+  bool enable_jets;
 
   // used by cloth
   bool force;

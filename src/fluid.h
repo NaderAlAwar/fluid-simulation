@@ -63,6 +63,7 @@ private:
   void ReassignParticles();
   void SetEmptySurfaceFull();
   void CreateNewBarriers();
+  void SetJetVelocities();
 
   // =====================
   // NAVIER-STOKES HELPERS
@@ -157,6 +158,7 @@ private:
   int steps;
   std::set<std::tuple<int, int, int>> barrierCells;
   std::vector<std::tuple<std::string, std::string>> sources;
+  std::vector<std::tuple<std::string, int, int, int, double>> jets;
 
   // simulation parameters
   bool xy_free_slip;

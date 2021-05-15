@@ -129,6 +129,7 @@ void Fluid::Load() {
     assert(i >= 0 && i < nx);
     assert(j >= 0 && j < ny);
     assert(k >= 0 && k < nz);
+    jets.emplace_back(token, i, j, k, velocity);
     if (token == "u")
       getCell(i, j, k)->set_u_plus(velocity);
     else if (token == "v")
@@ -202,6 +203,14 @@ bool Fluid::inShape(glm::vec3 &pos, const std::string &shape) {
     if (length < 0.8 * h)
       return true;
     return false;
+  } else if (shape == "bottom") {
+    double h = ny * dy / 6.0;
+
+    glm::vec3 center = glm::vec3(nx * dx * 0.5, h, nz * dz * 0.5);
+    double length = glm::length(center - pos);
+    if (length < 0.8 * h)
+      return true;
+    return false;
   } else {
     std::cout << "unknown shape: " << shape << std::endl;
     exit(0);
@@ -269,6 +278,7 @@ void Fluid::Animate() {
   ComputeNewVelocities();
   SetBoundaryVelocities();
   SetBarrierVelocities();
+  SetJetVelocities();
 
   // compressible / incompressible flow
   if (compressible == false) {
@@ -276,6 +286,7 @@ void Fluid::Animate() {
       double max_divergence = AdjustForIncompressibility();
       SetBoundaryVelocities();
       SetBarrierVelocities();
+      SetJetVelocities();
       if (max_divergence < EPSILON)
         break;
     }
@@ -381,6 +392,25 @@ void Fluid::ComputeNewVelocities() {
                        get_w_plus(i, j, k - 1)));
         cell->set_new_w_plus(new_w_plus);
       }
+    }
+  }
+}
+
+// ==============================================================
+void Fluid::SetJetVelocities() {
+  if (args->enable_jets) {
+    for (const auto& jet: jets) {
+      std::string direction;
+      int i, j, k;
+      double velocity;
+      std::tie(direction, i, j, k, velocity) = jet;
+
+      if (direction == "u")
+        set_new_u_plus(i, j, k, velocity);
+      else if (direction == "v")
+        set_new_v_plus(i, j, k, velocity);
+      else if (direction == "w")
+        set_new_w_plus(i, j, k, velocity);
     }
   }
 }
@@ -506,7 +536,7 @@ void Fluid::CopyVelocities() {
           std::cout << "velocity has exceeded reasonable threshhold, stopping "
                        "animation"
                     << std::endl;
-          args->animate = false;
+          // args->animate = false;
         }
       }
     }
