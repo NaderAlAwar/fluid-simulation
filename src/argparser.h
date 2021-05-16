@@ -75,6 +75,8 @@ public:
         fluid_type = argv[i];
       } else if (argv[i] == std::string("-enable_jets")) {
         enable_jets = true;
+      } else if (argv[i] == std::string("-record")) {
+        record = true;
       } else {
         std::cout << "ERROR: unknown command line argument " << i << ": '"
                   << argv[i] << "'" << std::endl;
@@ -113,6 +115,7 @@ public:
     pressure = false;
     fluid_type = "other";
     enable_jets = false;
+    record = false;
 
     gravity = glm::vec3(0, -9.8, 0);
 
@@ -142,6 +145,7 @@ public:
   bool bounding_box;
   std::string fluid_type;
   bool enable_jets;
+  bool record;
 
   // used by cloth
   bool force;

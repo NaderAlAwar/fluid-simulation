@@ -16,6 +16,7 @@
 #include "argparser.h"
 #include "camera.h"
 #include "glCanvas.h"
+#include "bitmap_image.hpp"
 
 // ====================================================================
 // ====================================================================
@@ -26,10 +27,14 @@ int main(int argc, char *argv[]) {
   ArgParser args(argc, argv);
   GLCanvas::initialize(&args);
 
+  unsigned char* imageData = (unsigned char*) malloc((int) args.width * args.height * 3);
+
   glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
   glDisable(GL_CULL_FACE);
+
+  int counter = 0;
 
   while (!glfwWindowShouldClose(GLCanvas::window)) {
 
@@ -57,6 +62,26 @@ int main(int argc, char *argv[]) {
 
     // Swap buffers
     glfwSwapBuffers(GLCanvas::window);
+    if (args.animate && args.record) {
+      unsigned char* currentData = imageData;
+      glReadPixels(0, 0, args.width, args.height, GL_RGB, GL_UNSIGNED_BYTE, currentData);
+
+      bitmap_image image(args.width, args.height);
+      image_drawer draw(image);
+
+      for (unsigned int j = 0; j < image.height(); j++) {
+        for (unsigned int i = 0; i < image.width(); i++) {
+          unsigned char r = *(currentData++);
+          unsigned char g = *(currentData++);
+          unsigned char b = *(currentData++);
+          image.set_pixel(i, image.height() - j - 1, r, g, b);
+        }
+      }
+
+      std::string name = "images/" + std::to_string(counter) + ".bmp";
+      counter++;
+      image.save_image(name);
+    }
     glfwPollEvents();
 
 #if defined(_WIN32)
@@ -66,6 +91,7 @@ int main(int argc, char *argv[]) {
 #endif
   }
 
+  free(imageData);
   GLCanvas::cleanupVBOs();
   glDeleteProgram(GLCanvas::programID);
 
