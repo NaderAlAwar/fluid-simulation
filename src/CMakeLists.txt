@@ -20,9 +20,6 @@ add_executable(${my_executable}
   vbo_structs.h
   boundingbox.h
   boundingbox.cpp
-  cloth.h
-  cloth.cpp
-  cloth_render.cpp
   fluid.h
   cell.h
   fluid.cpp

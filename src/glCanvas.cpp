@@ -1,7 +1,6 @@
 #include "glCanvas.h"
 #include "argparser.h"
 #include "camera.h"
-#include "cloth.h"
 #include "fluid.h"
 #include <cstdlib>
 
@@ -9,7 +8,6 @@
 // static variables of GLCanvas class
 
 ArgParser *GLCanvas::args = NULL;
-Cloth *GLCanvas::cloth = NULL;
 Fluid *GLCanvas::fluid = NULL;
 Camera *GLCanvas::camera = NULL;
 BoundingBox GLCanvas::bbox;
@@ -48,7 +46,6 @@ GLuint GLCanvas::colormodeID;
 void GLCanvas::initialize(ArgParser *_args) {
 
   args = _args;
-  cloth = NULL;
   fluid = NULL;
 
   glfwSetErrorCallback(error_callback);
@@ -103,7 +100,7 @@ void GLCanvas::initialize(ArgParser *_args) {
   programID = LoadShaders(args->path + "/simulation.vertexshader",
                           args->path + "/simulation.fragmentshader");
 
-  // Load cloth &/or fluid models
+  // Load fluid models
   Load();
 
   bbox.initializeVBOs();
@@ -133,23 +130,17 @@ void GLCanvas::initialize(ArgParser *_args) {
 }
 
 void GLCanvas::Load() {
-  delete cloth;
-  cloth = NULL;
   delete fluid;
   fluid = NULL;
-  if (args->cloth_file != "")
-    cloth = new Cloth(args);
   if (args->fluid_file != "")
     fluid = new Fluid(args);
-  assert(cloth || fluid);
+  assert(fluid);
 }
 
 void GLCanvas::animate() {
   if (args->animate) {
     // do 10 steps of animation before rendering
     for (int i = 0; i < 10; i++) {
-      if (cloth)
-        cloth->Animate();
       if (fluid)
         fluid->Animate();
     }
@@ -172,27 +163,16 @@ void GLCanvas::initializeVBOs() {
   GLCanvas::colormodeID =
       glGetUniformLocation(GLCanvas::programID, "colormode");
 
-  if (cloth)
-    cloth->initializeVBOs();
   if (fluid)
     fluid->initializeVBOs();
   HandleGLError("leaving initilizeVBOs()");
 }
 
 void GLCanvas::setupVBOs() {
-  if (cloth != NULL) {
-    bbox.Set(cloth->getBoundingBox());
-    if (fluid != NULL) {
-      bbox.Extend(fluid->getBoundingBox());
-    }
-  } else {
-    assert(fluid != NULL);
-    bbox.Set(fluid->getBoundingBox());
-  }
+  assert(fluid != NULL);
+  bbox.Set(fluid->getBoundingBox());
 
   bbox.setupVBOs();
-  if (cloth)
-    cloth->setupVBOs();
   if (fluid)
     fluid->setupVBOs();
   HandleGLError("leaving setupVBOs()");
@@ -232,16 +212,12 @@ void GLCanvas::drawVBOs(const glm::mat4 &ProjectionMatrix,
   glUniform1i(GLCanvas::colormodeID, 0);
   HandleGLError("mid8 GlCanvas::drawVBOs()");
 
-  if (cloth)
-    cloth->drawVBOs();
   if (fluid)
     fluid->drawVBOs();
   HandleGLError("leaving GlCanvas::drawVBOs()");
 }
 
 void GLCanvas::cleanupVBOs() {
-  if (cloth)
-    cloth->cleanupVBOs();
   if (fluid)
     fluid->cleanupVBOs();
 }
@@ -348,8 +324,6 @@ void GLCanvas::keyboardCB(GLFWwindow *window, int key, int scancode, int action,
       break;
     case ' ':
       // a single step of animation
-      if (cloth)
-        cloth->Animate();
       if (fluid)
         fluid->Animate();
       break;

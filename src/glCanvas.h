@@ -15,7 +15,6 @@
 #include "boundingbox.h"
 
 class ArgParser;
-class Cloth;
 class Fluid;
 class Camera;
 
@@ -28,7 +27,6 @@ class GLCanvas {
 public:
   // various static variables
   static ArgParser *args;
-  static Cloth *cloth;
   static Fluid *fluid;
   static BoundingBox bbox;
   static Camera *camera;
