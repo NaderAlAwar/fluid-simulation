@@ -1,4 +1,4 @@
-grid 100 24 1
+grid 125 25 125
 cell_dimensions 0.01 0.01 0.01
 
 flow incompressible
@@ -9,9 +9,6 @@ viscosity 0.001
 gravity 1
 
 initial_particles drop uniform
-density 15
+density 5
 
 initial_velocity zero
-
-sources
-s top_left uniform
