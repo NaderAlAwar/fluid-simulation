@@ -52,11 +52,7 @@ public:
     DefaultValues();
     // parse the command line arguments
     for (int i = 1; i < argc; i++) {
-      if (argv[i] == std::string("-cloth")) {
-        i++;
-        assert(i < argc);
-        separatePathAndFile(argv[i], path, cloth_file);
-      } else if (argv[i] == std::string("-fluid")) {
+      if (argv[i] == std::string("-fluid")) {
         i++;
         assert(i < argc);
         separatePathAndFile(argv[i], path, fluid_file);
@@ -101,7 +97,6 @@ public:
 
     particles = true;
     velocity = true;
-    force = true;
 
     face_velocity = 0;
     dense_velocity = 0;
@@ -109,7 +104,6 @@ public:
     surface = false;
     isosurface = 0.7;
 
-    wireframe = false;
     bounding_box = true;
     cubes = false;
     pressure = false;
@@ -126,7 +120,6 @@ public:
   // REPRESENTATION
   // all public! (no accessors)
 
-  std::string cloth_file;
   std::string fluid_file;
   std::string path;
   int width;
@@ -146,10 +139,6 @@ public:
   std::string fluid_type;
   bool enable_jets;
   bool record;
-
-  // used by cloth
-  bool force;
-  bool wireframe;
 
   // used by fluid
   int face_velocity;

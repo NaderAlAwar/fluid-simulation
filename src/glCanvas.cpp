@@ -33,7 +33,6 @@ GLuint GLCanvas::ModelMatrixID;
 GLuint GLCanvas::LightID;
 GLuint GLCanvas::MatrixID;
 GLuint GLCanvas::programID;
-GLuint GLCanvas::wireframeID;
 GLuint GLCanvas::colormodeID;
 
 // ========================================================
@@ -158,8 +157,6 @@ void GLCanvas::initializeVBOs() {
       glGetUniformLocation(GLCanvas::programID, "LightPosition_worldspace");
   GLCanvas::ViewMatrixID = glGetUniformLocation(GLCanvas::programID, "V");
   GLCanvas::ModelMatrixID = glGetUniformLocation(GLCanvas::programID, "M");
-  GLCanvas::wireframeID =
-      glGetUniformLocation(GLCanvas::programID, "wireframe");
   GLCanvas::colormodeID =
       glGetUniformLocation(GLCanvas::programID, "colormode");
 
@@ -198,7 +195,6 @@ void GLCanvas::drawVBOs(const glm::mat4 &ProjectionMatrix,
   HandleGLError("mid3 GlCanvas::drawVBOs()");
   glUniformMatrix4fv(GLCanvas::ViewMatrixID, 1, GL_FALSE, &ViewMatrix[0][0]);
   HandleGLError("mid4 GlCanvas::drawVBOs()");
-  glUniform1i(GLCanvas::wireframeID, args->wireframe);
 
   HandleGLError("mid5 GlCanvas::drawVBOs()");
   glUniform1i(GLCanvas::colormodeID, 1);
@@ -335,10 +331,6 @@ void GLCanvas::keyboardCB(GLFWwindow *window, int key, int scancode, int action,
     case 'V':
       args->velocity = !args->velocity;
       break;
-    case 'f':
-    case 'F':
-      args->force = !args->force;
-      break;
     case 'e':
     case 'E': // "faces"/"edges"
       args->face_velocity = !args->face_velocity;
@@ -350,10 +342,6 @@ void GLCanvas::keyboardCB(GLFWwindow *window, int key, int scancode, int action,
     case 's':
     case 'S':
       args->surface = !args->surface;
-      break;
-    case 'w':
-    case 'W':
-      args->wireframe = !args->wireframe;
       break;
     case 'b':
     case 'B':
